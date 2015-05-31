@@ -12,6 +12,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-l1","--logsKeithley", nargs='?', default="logs/",help="enter the filepath of the Keithley-log")
 parser.add_argument("-l2","--logsEudaq", nargs='?', default="eudaq_logs/",help="enter the filepath of the EUDAQ-log")
 parser.add_argument("-r", "--run", nargs='?', default="0",help="enter the runnumber without date information")
+parser.add_argument("start", nargs='?', default="1111-01-01.00:00:00",help="enter the runnumber without date information")
+parser.add_argument("stop", nargs='?', default="2020-01-01.00:00:00",help="enter the runnumber without date information")
 args = parser.parse_args()
 
 print "Looking for Run:", args.run
@@ -28,7 +30,7 @@ elif args.run >9:
 start_tag = "Starting Run "+runname
 stop_tag  = "Stopping Run "+runname
 time_start = ""
-time_stop = ""
+time_stop = "2015-12-31 23:59:59.999"
 eudaq_log_dir = str(args.logsEudaq)+"2015-*"
 for name in glob.glob(eudaq_log_dir):
     logfile = open(name,'r')
@@ -52,16 +54,27 @@ run_start  = convertTime(time_start)
 run_stop   = convertTime(time_stop)
 date = time_start.strftime("%Y-%m-%d")#time_start.
 
+bla1 = datetime.strptime(args.start, "%Y-%m-%d.%H:%M:%S")
+bla2 = datetime.strptime(args.stop, "%Y-%m-%d.%H:%M:%S")
+
+if bla1.year != 1111:
+    time_start = bla1
+    time_stop  = bla2
+
 ## read out the currents from the Keithley logs
-xx = {}
-yy = {}
+xx      = {}
+voltage = {}
+current = {}
 keithleys = OrderedDict([("Keithley1","Silicon"),("Keithley2","Diamond front"),("Keithley3","Diamond back")])
 for key in keithleys:
-    xx[key] = []
-    yy[key] = []
+    xx[key]         = []
+    voltage[key]    = []
+    current[key]    = []
 stop = False
 
-keithley_log_dir = str(args.logsKeithley)+"keithleyLog_2015*"
+
+keithley_log_dir = str(args.logsKeithley)+"keithleyLog_"+str(time_start.year)+"_0"+str(time_start.month)+"_"+str(time_start.day)+"*"
+print keithley_log_dir
 for name in glob.glob(keithley_log_dir):
     data = open(name,'r')
     for line in data:
@@ -71,18 +84,22 @@ for name in glob.glob(keithley_log_dir):
             for key in keithleys:
                 if len(info) > 3 and info[0].startswith(key):
                     if time > time_start and time < time_stop:
-                        yy[key].append(float(info[4])*1e9)
+                        current[key].append(float(info[4])*1e9)
                         xx[key].append(convertTime(time))
+                        voltage[key].append(float(info[3]))
             if time_stop < time:
                 break
 data.close()
 
 
+
+
 ## create the canvas
-c = ROOT.TCanvas("c","Keithley Currents",1000,1000 )
+canvas_name = "Keithley Currents for Run"+args.run
+c = ROOT.TCanvas("c",canvas_name,1000,1000 )
+pads = []
 c.Divide(1,3)
 c.SetFillColor(39)
-
 
 ## draw the graphs
 #Keithley1
@@ -90,10 +107,17 @@ graphs = []
 for key, value in keithleys.items():
     ind = keithleys.items().index((key,value))
     c.cd(ind+1)
+#    pad1 = ROOT.TPad("pad1_"+key,"",0,0,1,1)
+#    pad2 = ROOT.TPad("pad2_"+key,"",0,0,1,1)
+#    pad2.SetFillStyle(4000) # transparent
+#    pad1.Draw()
+#    pad1.cd()
+#    print pad1
     x = array.array('d',xx[key])
-    y = array.array('d',yy[key])
+    y = array.array('d',current[key])
     g = ROOT.TGraph(len(x),x,y)
     g.Draw("AP")
+
     #g.SetTitle(value)
     g.GetHistogram().SetTitle(value)
     #g.GetHistogram().SetTitleSize(0.5)
@@ -120,6 +144,32 @@ for key, value in keithleys.items():
     c.cd(ind+1).SetGridx(10)
     g.Draw("AP")
     graphs.append(g)
+#    print pad1
+#
+#    ymin = min(voltage[key])
+#    ymax = max(voltage[key])
+#    if ymin == ymax:
+#        if ymin<0:
+#            ymax =0
+#        else:
+#            ymin = 0
+#    print ymax, ymin,g.GetHistogram().GetYaxis().GetXmin(),g.GetHistogram().GetYaxis().GetXmax()
+#    dy = (ymax-ymin)/0.8
+#    xmin = pad1.GetUxmin()
+#    xmax = pad1.GetUxmax()
+#    print xmin,xmax,bla,blub
+#    dx = (xmax-xmin)/0.8
+#    pad2.Range(xmin,ymin-0.1-dy, xmax, ymax+0.1*dy)
+#    c.cd(ind+1)
+#    pad2.Draw()
+#    pad2.cd()
+#    x = array.array('d',xx[key])
+#    y = array.array('d',voltage[key])
+#    g2 = ROOT.TGraph(len(x),x,y)
+#    g2.Draw("P")
+#    graphs.append(g2)
+#    pads.append(pad1)
+#    pads.append(pad2)
 
 c.Update()
 
