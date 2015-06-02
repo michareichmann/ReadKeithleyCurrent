@@ -56,8 +56,12 @@ if args.run != "0":
 if args.run == "0":
     bla1 = datetime.strptime(args.start, "%Y-%m-%d.%H:%M:%S")
     bla2 = datetime.strptime(args.stop, "%Y-%m-%d.%H:%M:%S")
-    time_start = bla1
-    time_stop  = bla2
+    if bla1 < bla2:
+        time_start = bla1
+        time_stop  = bla2
+    else:
+        time_start = bla2
+        time_stop  = bla1
 
 
 #find file to begin with
@@ -87,7 +91,7 @@ for i in range(len(log_names)):
 
 print "start with file:", log_names[begin_file]
 
-## read out the currents from the Keithley logs
+##read out the currents from the Keithley logs
 xx      = {}
 voltage = {}
 current = {}
@@ -117,23 +121,23 @@ for i in range(begin_file,len(log_names)):
 
 ## create the canvas
 canvas_name = "Keithley Currents for Run"+args.run
-c = ROOT.TCanvas("c",canvas_name,1000,1000 )
-pads = []
-c.Divide(1,3)
+c = ROOT.TCanvas("c",canvas_name,1500,1000 )
+c.Divide(2,3)
 c.SetFillColor(39)
+pads = []
+graphs = []
 
 ## draw the graphs
 #Keithley1
-graphs = []
 for key, value in keithleys.items():
     ind = keithleys.items().index((key,value))
-    c.cd(ind+1)
-#    pad1 = ROOT.TPad("pad1_"+key,"",0,0,1,1)
+    c.cd(ind*2+1)
+    # pad1 = ROOT.TPad("pad1_"+key,"",0,0,1,1)
 #    pad2 = ROOT.TPad("pad2_"+key,"",0,0,1,1)
 #    pad2.SetFillStyle(4000) # transparent
-#    pad1.Draw()
-#    pad1.cd()
-#    print pad1
+#     pad1.Draw()
+#     pad1.cd(ind+1)
+#     print pad1
     x = array.array('d',xx[key])
     y = array.array('d',current[key])
     g = ROOT.TGraph(len(x),x,y)
@@ -163,10 +167,9 @@ for key, value in keithleys.items():
     g.SetMarkerColor(2)
     g.SetMarkerSize(0.2)
     g.SetMarkerStyle(20)
-    c.cd(ind+1).SetGridx(10)
+    c.cd(ind*2+1).SetGridx(10)
     g.Draw("AP")
     graphs.append(g)
-#    print pad1
 #
 #    ymin = min(voltage[key])
 #    ymax = max(voltage[key])
@@ -185,11 +188,32 @@ for key, value in keithleys.items():
 #    c.cd(ind+1)
 #    pad2.Draw()
 #    pad2.cd()
-#    x = array.array('d',xx[key])
-#    y = array.array('d',voltage[key])
-#    g2 = ROOT.TGraph(len(x),x,y)
-#    g2.Draw("P")
-#    graphs.append(g2)
+    c.cd(ind*2+2)
+    c.cd(ind*2+2).SetGridy(10)
+    x = array.array('d',xx[key])
+    y = array.array('d',voltage[key])
+    g2 = ROOT.TGraph(len(x),x,y)
+    g2.GetHistogram().SetTitle(value)
+    g2.GetYaxis().SetRangeUser(-1100,1100)
+    g2.GetXaxis().SetTitle("#font[22]{time [hh:mm:ss]}")
+    g2.GetXaxis().CenterTitle()
+    g2.GetXaxis().SetTimeFormat("%H:%M")
+    g2.GetXaxis().SetTimeOffset(1486249200)
+    g2.GetXaxis().SetTimeDisplay(1)
+    g2.GetXaxis().SetTitleSize(0.05)
+    g2.GetXaxis().SetLabelSize(0.05)
+    g2.GetXaxis().SetTitleOffset(0.90)
+    g2.GetYaxis().SetTitleOffset(0.69)
+    g2.GetYaxis().SetTitle("#font[22]{voltage [V]}")
+    g2.GetYaxis().CenterTitle()
+    g2.GetYaxis().SetLabelSize(0.05)
+    g2.GetYaxis().SetTitleSize(0.06)
+    g2.GetYaxis().SetTitleOffset(0.69)
+    g2.SetMarkerColor(4)
+    g2.SetMarkerSize(0.2)
+    g2.SetMarkerStyle(20)
+    g2.Draw("AP")
+    graphs.append(g2)
 #    pads.append(pad1)
 #    pads.append(pad2)
 
