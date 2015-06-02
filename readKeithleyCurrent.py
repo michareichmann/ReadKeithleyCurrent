@@ -7,7 +7,6 @@ import array
 from datetime import datetime, date, time
 from collections import OrderedDict
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument("-l1","--logsKeithley", nargs='?', default="logs/",help="enter the filepath of the Keithley-log")
 parser.add_argument("-l2","--logsEudaq", nargs='?', default="eudaq_logs/",help="enter the filepath of the EUDAQ-log")
@@ -22,44 +21,71 @@ def convertTime(string):
     return string
 
 ## get start and stop of the run from eudaq logfile
-#logfile = open(args.l2)
 if args.run > 99:
     runname = "150500"+str(args.run)
 elif args.run >9:
     runname = "1505000"+str(args.run)
-start_tag = "Starting Run "+runname
-stop_tag  = "Stopping Run "+runname
 time_start = ""
 time_stop = "2015-12-31 23:59:59.999"
-eudaq_log_dir = str(args.logsEudaq)+"2015-*"
-for name in glob.glob(eudaq_log_dir):
-    logfile = open(name,'r')
-    for line in logfile:
-        data = line.split("\t")
-        if len(data)>1:
-            if data[1].startswith(start_tag):
-                time_start = data[2]
-                print "start:", data[2]
-            if data[1].startswith(stop_tag):
-                time_stop = data[2]
-                print "stop: ", data[2]
-    if len(time_start) > 3:
-        break
-logfile.close()
+if args.run != "0":
+    start_tag = "Starting Run "+runname
+    stop_tag  = "Stopping Run "+runname
+    eudaq_log_dir = str(args.logsEudaq)+"2015-*"
+    for name in glob.glob(eudaq_log_dir):
+        logfile = open(name,'r')
+        for line in logfile:
+            data = line.split("\t")
+            if len(data)>1:
+                if data[1].startswith(start_tag):
+                    time_start = data[2]
+                    print "start:", data[2]
+                if data[1].startswith(stop_tag):
+                    time_stop = data[2]
+                    print "stop: ", data[2]
+        if len(time_start) > 3:
+            break
+    logfile.close()
 
-#example string: '2015-05-29 14:14:40.923'
-time_start = datetime.strptime(time_start, "%Y-%m-%d %H:%M:%S.%f")
-time_stop  = datetime.strptime(time_stop, "%Y-%m-%d %H:%M:%S.%f")
-run_start  = convertTime(time_start)
-run_stop   = convertTime(time_stop)
-date = time_start.strftime("%Y-%m-%d")#time_start.
 
-bla1 = datetime.strptime(args.start, "%Y-%m-%d.%H:%M:%S")
-bla2 = datetime.strptime(args.stop, "%Y-%m-%d.%H:%M:%S")
+    #example string: '2015-05-29 14:14:40.923'
+    time_start = datetime.strptime(time_start, "%Y-%m-%d %H:%M:%S.%f")
+    time_stop  = datetime.strptime(time_stop, "%Y-%m-%d %H:%M:%S.%f")
 
-if bla1.year != 1111:
+
+#start and stop for noRun mode
+if args.run == "0":
+    bla1 = datetime.strptime(args.start, "%Y-%m-%d.%H:%M:%S")
+    bla2 = datetime.strptime(args.stop, "%Y-%m-%d.%H:%M:%S")
     time_start = bla1
     time_stop  = bla2
+
+
+#find file to begin with
+keithley_log_dir = str(args.logsKeithley)+"keithleyLog_"+str(time_start.year)+"*"
+log_names = []
+for name in glob.glob(keithley_log_dir):
+    log_names.append(name)
+log_names = sorted(log_names)
+last_line = False
+
+begin_file = 0
+for i in range(len(log_names)):
+    data = open(log_names[i],'r')
+    for line in data:
+        first_line = line.split()
+        if len(first_line) == 0: break
+        if first_line[1].startswith(str(time_start.year)): break
+    if len(first_line) == 0:
+        continue
+    if first_line[1].startswith(str(time_start.year)):# and last_line[1].startswith(str(time_start.year)):
+        first_line = datetime.strptime(first_line[1]+" "+first_line[2], "%Y_%m_%d %H:%M:%S")
+        #last_line = datetime.strptime(last_line[1]+" "+last_line[2], "%Y_%m_%d %H:%M:%S")
+        if time_start < first_line:# and time_start < last_line:
+            begin_file = i-1
+            break
+    data.close()
+
+print "start with file:", log_names[begin_file]
 
 ## read out the currents from the Keithley logs
 xx      = {}
@@ -70,16 +96,12 @@ for key in keithleys:
     xx[key]         = []
     voltage[key]    = []
     current[key]    = []
-stop = False
 
-
-keithley_log_dir = str(args.logsKeithley)+"keithleyLog_"+str(time_start.year)+"_0"+str(time_start.month)+"_"+str(time_start.day)+"*"
-print keithley_log_dir
-for name in glob.glob(keithley_log_dir):
-    data = open(name,'r')
+for i in range(begin_file,len(log_names)):
+    data = open(log_names[i],'r')
     for line in data:
         info = line.split()
-        if info[1].startswith("2015"):
+        if info[1].startswith(str(time_start.year)):
             time = datetime.strptime(info[1]+" "+info[2], "%Y_%m_%d %H:%M:%S")
             for key in keithleys:
                 if len(info) > 3 and info[0].startswith(key):
@@ -89,8 +111,7 @@ for name in glob.glob(keithley_log_dir):
                         voltage[key].append(float(info[3]))
             if time_stop < time:
                 break
-data.close()
-
+    data.close()
 
 
 
@@ -125,7 +146,8 @@ for key, value in keithleys.items():
     ##X-axis
     g.GetXaxis().SetTitle("#font[22]{time [hh:mm:ss]}")
     g.GetXaxis().CenterTitle()
-    g.GetXaxis().SetTimeFormat("%H:%M:%S")
+    g.GetXaxis().SetTimeFormat("%H:%M")
+    g.GetXaxis().SetTimeOffset(1486249200)
     g.GetXaxis().SetTimeDisplay(1)
     g.GetXaxis().SetTitleSize(0.05)
     g.GetXaxis().SetLabelSize(0.05)
@@ -174,4 +196,4 @@ for key, value in keithleys.items():
 c.Update()
 
 
-
+raw_input()
