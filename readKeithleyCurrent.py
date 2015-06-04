@@ -16,6 +16,8 @@ parser.add_argument("start", nargs='?', default="1111-01-01.00:00:00",
                     help="enter the runnumber without date information")
 parser.add_argument("stop", nargs='?', default="2020-01-01.00:00:00",
                     help="enter the runnumber without date information")
+parser.add_argument("-s", "--save", action="store_true", help="enter -s to save the file")
+parser.add_argument("-f", "--fileformat", nargs='?', default="png", help="enter file format e.g. pdf")
 args = parser.parse_args()
 
 print "Looking for Run:", args.run
@@ -166,7 +168,7 @@ for key, value in keithleys.items():
 
     dy = 0.1 * (max(current[key]) - min(current[key]))
     dx = 0.05 * (max(xx[key]) - min(xx[key]))
-    h1 = c.DrawFrame(min(xx[key])-dx, min(current[key]) - dy, max(xx[key])+dx, max(current[key]) + dy)
+    h1 = c.DrawFrame(min(xx[key]) - dx, min(current[key]) - dy, max(xx[key]) + dx, max(current[key]) + dy)
     # X-axis
     h1.GetXaxis().SetTitle("#font[22]{time [hh:mm]}")
     h1.GetXaxis().CenterTitle()
@@ -209,7 +211,7 @@ for key, value in keithleys.items():
     g2.Draw("P")
 
     # draw the second axis
-    a1 = ROOT.TGaxis(max(xx[key])+dx, -1100, max(xx[key])+dx, 1100, -1100, 1100, 510, "+L")
+    a1 = ROOT.TGaxis(max(xx[key]) + dx, -1100, max(xx[key]) + dx, 1100, -1100, 1100, 510, "+L")
     a1.SetTitle("#font[22]{voltage [V]}")
     a1.SetTitleSize(0.06)
     a1.SetTitleOffset(0.5)
@@ -237,7 +239,7 @@ for key, value in keithleys.items():
     p3.SetFrameFillStyle(4000)
     p3.Draw()
     p3.cd()
-    t22 = ROOT.TText(0.1,0.92,value)
+    t22 = ROOT.TText(0.1, 0.92, value)
     t22.SetTextSize(0.09)
     t22.Draw()
     texts.append(t22)
@@ -248,7 +250,10 @@ for key, value in keithleys.items():
     # axis_title.Draw()
 
 c.Update()
-filename = "Run"+str(args.run)+".png"
-c.SaveAs(filename)
 
-# raw_input()
+if args.save:
+    filename = "Run" + str(args.run) + "." + str(args.fileformat)
+    c.SaveAs(filename)
+
+if not args.save:
+    raw_input()
