@@ -48,7 +48,7 @@ do
    	elif [ $start -lt 100 ]; then
       	run=run0$start.$runff
 	else
-		run=$start.$runff
+		run=run$start.$runff
    	fi
 	echo "checking if $run exists"
    	if [ ! -f $PWD/runs/$run ]; then

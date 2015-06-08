@@ -101,28 +101,28 @@ for key, value in keithleys.items():
     # Graph Voltage
     g2 = root_stuff.graph2(key, xx, voltage)
 
-    # pad for graph g1
-    p1 = root_stuff.pad1(key)
-    h1 = root_stuff.frame1(p1, key, xx, current, dx, dy)
-    # p1.GetFrame().SetFillColor(0)  # was 21
-    g1.Draw("P")
-
     # pad for graph g2
-    p2 = root_stuff.pad2(key)
-    h2 = root_stuff.frame2(key, xx, dx, p2)
-
+    p1 = root_stuff.pad1(key)
+    h2 = root_stuff.frame2(key, xx, dx, p1)
+    # p1.GetFrame().SetFillColor(0)  # was 21
     g2.Draw("P")
 
     # second y-axis
     a1 = root_stuff.axis1(key, xx, dx)
 
+
     # title pad
     p3 = root_stuff.pad3(key)
     t1 = root_stuff.text1(value)
 
-    # # border pad
+    # border pad
     p4 = root_stuff.pad4(key)
     b1 = root_stuff.box1()
+
+    # pad for graph g1
+    p2 = root_stuff.pad2(key)
+    h1 = root_stuff.frame1(p2, key, xx, current, dx, dy)
+    g1.Draw("P")
 
 
     # save the stuff s.t. it wont get lost in the loop
