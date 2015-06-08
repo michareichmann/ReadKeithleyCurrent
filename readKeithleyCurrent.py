@@ -19,6 +19,7 @@ parser.add_argument("stop", nargs='?', default="2020-01-01.00:00:00",
                     help="enter the runnumber without date information")
 parser.add_argument("-s", "--save", action="store_true", help="enter -s to save the file")
 parser.add_argument("-f", "--fileformat", nargs='?', default="png", help="enter file format e.g. pdf")
+parser.add_argument("-rt", "--rel_time", action="store_true", help="enter -rt to start the time axis from zero")
 args = parser.parse_args()
 
 time_interval = functions.get_start_stop(args.run, args.logsEudaq, args.start, args.stop)
@@ -61,6 +62,12 @@ for key in keithleys:
     if len(voltage[key]) == 0:
         voltage[key] = [0]
 
+
+# convert to relative time
+if args.rel_time:
+    functions.relative_time(xx, keithleys)
+
+
 # create the canvas
 if args.save:
     ROOT.gROOT.SetBatch(1)
@@ -72,16 +79,21 @@ else:
     canvas_name = "Keithley Currents for Run " + args.run
 c = ROOT.TCanvas("c", canvas_name, 1000, 1000)
 c.Divide(1, 3)
-c.SetFillColor(17)
+c.SetFillColor(0) # was 17
 pads = []
 graphs = []
 axis = []
 texts = []
+boxes = []
 
 # draw the graphs
 for key, value in keithleys.items():
     ind = keithleys.items().index((key, value))
     c.cd(ind + 1)
+
+    # get edges of the frame
+    dy = 0.1 * (max(current[key]) - min(current[key]))
+    dx = 0.05 * (max(xx[key]) - min(xx[key]))
 
     # Graph Current
     g1 = root_stuff.graph1(key, xx, current)
@@ -91,14 +103,8 @@ for key, value in keithleys.items():
 
     # pad for graph g1
     p1 = root_stuff.pad1(key)
-
-    # get edges of the frame
-    dy = 0.1 * (max(current[key]) - min(current[key]))
-    dx = 0.05 * (max(xx[key]) - min(xx[key]))
-    h1 = root_stuff.frame1(c, key, xx, current, dx, dy)
-    p1.GetFrame().SetFillColor(21)
-    p1.GetFrame().SetBorderSize(12)
-
+    h1 = root_stuff.frame1(p1, key, xx, current, dx, dy)
+    # p1.GetFrame().SetFillColor(0)  # was 21
     g1.Draw("P")
 
     # pad for graph g2
@@ -114,6 +120,11 @@ for key, value in keithleys.items():
     p3 = root_stuff.pad3(key)
     t1 = root_stuff.text1(value)
 
+    # # border pad
+    p4 = root_stuff.pad4(key)
+    b1 = root_stuff.box1()
+
+
     # save the stuff s.t. it wont get lost in the loop
     axis.append(a1)
     graphs.append(g1)
@@ -122,12 +133,12 @@ for key, value in keithleys.items():
     pads.append(p2)
     pads.append(p3)
     texts.append(t1)
+    boxes.append(b1)
 
 c.Update()
 
 if args.save:
-    filename = "runs/run" + str(args.run) + "." + str(args.fileformat)
-    c.SaveAs(filename)
+    functions.save_as(args.run, args.fileformat, c)
 
 if not args.save:
     raw_input()

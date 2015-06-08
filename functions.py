@@ -67,6 +67,9 @@ def find_start_stop(start, stop, interval, log):
         if len(interval[0]) > 3:
             break
         logfile.close()
+    if interval[0] == "":
+        print "There was no data in the logfiles --> exit"
+        exit()
 
     # example string: '2015-05-29 14:14:40.923'
     interval[0] = datetime.strptime(interval[0], "%Y-%m-%d %H:%M:%S.%f")
@@ -108,3 +111,27 @@ def find_start_file(log, times):
     for i in range(valid_items,len(log_names)-1):
         del log_names[valid_items]
     return log_names
+
+
+# relative time axis
+def relative_time(xx, keithleys):
+    for key in keithleys:
+        zero = xx[key][0]
+        for i in range(len(xx[key])):
+            xx[key][i] = xx[key][i] - zero
+    return xx
+
+# save the root to file
+def save_as(run, formats, canvas):
+    if int(run) < 10:
+        run = "00"+run
+    elif int(run) < 100:
+        run = "0"+run
+    if formats == "all":
+        ftypes = [".pdf", ".eps", ".root"]
+        for type in ftypes:
+            filename = "runs/run" + str(run) + type
+            canvas.SaveAs(filename)
+    else:
+        filename = "runs/run" + str(run) + "." + str(formats)
+        canvas.SaveAs(filename)
