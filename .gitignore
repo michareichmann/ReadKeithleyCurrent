@@ -1,4 +1,10 @@
+#ignore log and test folders
 logs/
 eudaq_logs/
+testing/
+pics/
+runs/
+
+#ignore python bytecode and temp files
 *~
-bla.py
+*.pyc

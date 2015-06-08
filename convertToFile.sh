@@ -1,5 +1,9 @@
 #!/bin/sh
 
+if [ ! -d $PWD/runs ]; then
+    mkdir -p $PWD/runs
+fi
+
 # A POSIX variable
 OPTIND=1         # Reset in case getopts has been used previously in the shell.
 
