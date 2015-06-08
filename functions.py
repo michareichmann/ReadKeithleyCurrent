@@ -34,7 +34,7 @@ def get_start_stop(run, logdir, start="", stop=""):
         start_tag = "Starting Run " + run_name
         stop_tag = "Stopping Run " + run_name
         eudaq_log_dir = str(logdir) + "2015-*"
-        time_interval = find_start_stop(start_tag, stop_tag, time_interval, eudaq_log_dir)
+        time_interval = find_start_stop(start_tag, stop_tag, time_interval, eudaq_log_dir, run)
 
     elif run == "0":
         if len(start) > 5:
@@ -47,29 +47,37 @@ def get_start_stop(run, logdir, start="", stop=""):
             start_tag = "Starting Run " + run_name1
             stop_tag = "Stopping Run " + run_name2
             eudaq_log_dir = str(logdir) + "2015-*"
-            time_interval = find_start_stop(start_tag, stop_tag, time_interval, eudaq_log_dir)
+            time_interval = find_start_stop(start_tag, stop_tag, time_interval, eudaq_log_dir, run)
     print "time start:", datetime.strftime(time_interval[0], '%Y-%m-%d %H:%M:%S')
     print "time stop :", datetime.strftime(time_interval[1], '%Y-%m-%d %H:%M:%S')
     return time_interval
 
 
 # find start and stop in file
-def find_start_stop(start, stop, interval, log):
-    for name in glob.glob(log):
-        logfile = open(name, 'r')
-        for line in logfile:
-            data = line.split("\t")
-            if len(data) > 1:
-                if data[1].startswith(start):
-                    interval[0] = data[2]
-                if data[1].startswith(stop):
-                    interval[1] = data[2]
-        if len(interval[0]) > 3:
+def find_start_stop(start, stop, interval, log, run):
+    while True:
+        for name in glob.glob(log):
+            logfile = open(name, 'r')
+            for line in logfile:
+                data = line.split("\t")
+                if len(data) > 1:
+                    if data[1].startswith(start):
+                        interval[0] = data[2]
+                    if data[1].startswith(stop):
+                        interval[1] = data[2]
+            if len(interval[0]) > 3:
+                break
+            logfile.close()
+        if interval[0] == "":
+            print "There was no data in the logfiles --> exit"
+            exit()
+        if interval[1] == "2015-12-31 23:59:59.999":
+            run_name = convert_run(run)
+            stop = "Starting Run " + str(int(run_name)+1)
+            interval[0] = ""
+        else:
             break
-        logfile.close()
-    if interval[0] == "":
-        print "There was no data in the logfiles --> exit"
-        exit()
+
 
     # example string: '2015-05-29 14:14:40.923'
     interval[0] = datetime.strptime(interval[0], "%Y-%m-%d %H:%M:%S.%f")
