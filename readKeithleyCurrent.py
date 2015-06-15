@@ -49,9 +49,10 @@ if args.stop != "-1":
 # ====================================
 if args.dia_runs:
     x = RunInfo(args.jsonfile)
-    for i in x.dia_runs():
-        print i
-    print 'this took ', time() - start_time, ' seconds'
+    x.print_dia_runs()
+    # for i in x.dia_runs():
+    #     print i
+    x.elapsed_time(start_time)
     exit()
 
 # ====================================
@@ -59,9 +60,8 @@ if args.dia_runs:
 # ====================================
 if args.first_last:
     x = RunInfo(args.jsonfile)
-    print x.first
-    print x.last
-    print 'this took ', time() - start_time, ' seconds'
+    x.print_times()
+    x.elapsed_time(start_time)
     exit()
 
 
