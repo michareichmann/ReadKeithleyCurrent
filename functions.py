@@ -7,6 +7,7 @@ import json
 from collections import OrderedDict
 import operator
 from time import time
+import sys
 
 
 # ====================================
@@ -81,7 +82,7 @@ class RunInfo:
             if dia1_now == dia1:
                 end = run
         for i in range(len(dia_runs) - 1):
-            dia_runs[i][3] = dia_runs[i+1][3]
+            dia_runs[i][3] = dia_runs[i + 1][3]
         dia_runs[-1][3] = self.last
         return dia_runs
 
@@ -94,9 +95,6 @@ class RunInfo:
         s = datetime.strptime(s, "%m/%d/%Y %H:%M:%S")
         return s
 
-    def elapsed_time(self, start):
-        print 'elapsed time:', '{0:0.2f}'.format(time() - start), 'seconds'
-
     def print_times(self):
         print 'first run:', self.first
         print 'last run:', self.last
@@ -104,13 +102,14 @@ class RunInfo:
     def print_dia_runs(self):
         max_length = 0
         for i in self.dia_runs():
-            if len(i[0]+i[1]) > max_length:
-                max_length = len(i[0]+i[1])
+            if len(i[0] + i[1]) > max_length:
+                max_length = len(i[0] + i[1])
         for i in self.dia_runs():
             spaces = "  "
-            for j in range(max_length - len(i[0]+i[1])):
-                spaces = spaces + " "
+            for j in range(max_length - len(i[0] + i[1])):
+                spaces += " "
             print i[0], '&', i[1], '\b:' + spaces + 'run', i[2], '-', i[3]
+
 
 # ====================================
 # HELPER FUNCTIONS
@@ -135,6 +134,11 @@ def convert_run(number):
     else:
         run_number = "15050000" + str(number)
     return run_number
+
+
+# prints elapsed time
+def elapsed_time(start):
+    print 'elapsed time:', '{0:0.2f}'.format(time() - start), 'seconds'
 
 
 # ====================================
@@ -166,14 +170,20 @@ class KeithleyInfo(RunInfo):
         return log_names
 
     def get_start_log(self):
+        valid_logs = []
         start_log = 0
+        break_loop = False
+        x = 8
         for i in range(len(self.get_lognames())):
+            first_line = ""
             data = open(self.get_lognames()[i], 'r')
+            sys.stdout.flush()
             for line in data:
                 first_line = line.split()
                 if len(first_line) == 0:
                     break
                 if first_line[1].startswith(str(self.start.year)):
+                    valid_logs.append(i)
                     break
             # if whole file is empty continue
             if len(first_line) == 0:
@@ -181,9 +191,12 @@ class KeithleyInfo(RunInfo):
             if first_line[1].startswith(str(self.start.year)):
                 first_line = datetime.strptime(first_line[1] + " " + first_line[2], "%Y_%m_%d %H:%M:%S")
                 if self.start < first_line:
-                    start_log = i - 1
+                    start_log = valid_logs[-2]
+                    break_loop = True
                     break
             data.close()
+            if break_loop:
+                break
         return start_log
 
     def logs_from_start(self):
@@ -227,17 +240,17 @@ class KeithleyInfo(RunInfo):
         return dicts
 
     def find_start(self, data):
-        lines =  len(data.readlines())
+        lines = len(data.readlines())
         was_lines = 0
         data.seek(0)
         if lines > 10000:
             for i in range(6):
-                lines = lines / 2
-                for i in range(lines):
+                lines /= 2
+                for j in range(lines):
                     data.readline()
                 while True:
                     info = data.readline().split()
-                    if info == []:
+                    if not info:
                         break
                     if info[1].startswith(str(self.start.year)):
                         now = datetime.strptime(info[1] + " " + info[2], "%Y_%m_%d %H:%M:%S")
@@ -246,13 +259,9 @@ class KeithleyInfo(RunInfo):
                             break
                         else:
                             data.seek(0)
-                            for i in range(was_lines):
+                            for k in range(was_lines):
                                 data.readline()
                             break
-
-
-
-
 
     def check_empty(self, dicts):
         for i in range(len(dicts)):

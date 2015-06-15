@@ -69,19 +69,15 @@ if args.first_last:
 # GET INFO FROM JSON AND KEIHTLEY LOG
 # ====================================
 x = KeithleyInfo(args.logsKeithley, args.jsonfile, args.start, args.stop)
+print x.log_names[0]
 if not args.save:
     print 'start:', x.start
     print 'stop: ', x.stop
     print 'this took ', time() - start_time, ' seconds'
 
-
-
-
 # convert to relative time
 if args.rel_time:
     x.relative_time()
-    # functions.relative_time(x.time_x, x.keithleys)
-
 
 # create the canvas
 if args.save:
