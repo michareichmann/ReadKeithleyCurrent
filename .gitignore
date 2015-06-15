@@ -4,6 +4,9 @@ eudaq_logs/
 testing/
 pics/
 runs/
+test.sh
+ping.py
+
 
 #ignore python bytecode and temp files
 *~

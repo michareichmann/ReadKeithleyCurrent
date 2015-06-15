@@ -33,8 +33,8 @@ echo "start with Run $start and stop with run $end"
 echo $ff
 if [ "$ff" = "all" ]; then
 	runff=eps
-	start=1
-	end=500
+	start=24
+	end=444
 else
 	runff=$ff
 fi
@@ -52,7 +52,7 @@ do
    	fi
 	echo "checking if $run exists"
    	if [ ! -f $PWD/runs/$run ]; then
-      	python readKeithleyCurrent.py -r $start -s -f $ff
+      	python readKeithleyCurrent.py $start -s -f $ff
 	else
 		echo "$run already exists"
 	fi

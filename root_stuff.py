@@ -6,6 +6,7 @@ pad_color = 0  # was 26
 axis_title_size = 0.07
 left_margin = 0.08
 
+
 # first graph for the current
 def graph1(key, xx, current):
     x = array.array('d', xx[key])
@@ -137,3 +138,25 @@ def box1():
     b1.SetFillStyle(4000)
     b1.Draw("L")
     return b1
+
+
+# save the root to file
+def save_as(formats, canvas, start, stop):
+    run = write_run(start) + '-' + write_run(stop)
+    if stop == '-1':
+        run = write_run(start)
+    if formats == "all":
+        ftypes = [".pdf", ".eps", ".root"]
+        for ftype in ftypes:
+            filename = "runs/run" + str(run) + ftype
+            canvas.SaveAs(filename)
+    else:
+        filename = "runs/run" + str(run) + "." + str(formats)
+        canvas.SaveAs(filename)
+
+def write_run(run):
+    if int(run) < 10:
+        run = "00" + run
+    elif int(run) < 100:
+        run = "0" + run
+    return run
