@@ -6,6 +6,7 @@ from datetime import datetime, time
 import json
 from collections import OrderedDict
 import operator
+from time import time
 
 
 # ====================================
@@ -93,6 +94,23 @@ class RunInfo:
         s = datetime.strptime(s, "%m/%d/%Y %H:%M:%S")
         return s
 
+    def elapsed_time(self, start):
+        print 'elapsed time:', '{0:0.2f}'.format(time() - start), 'seconds'
+
+    def print_times(self):
+        print 'first run:', self.first
+        print 'last run:', self.last
+
+    def print_dia_runs(self):
+        max_length = 0
+        for i in self.dia_runs():
+            if len(i[0]+i[1]) > max_length:
+                max_length = len(i[0]+i[1])
+        for i in self.dia_runs():
+            spaces = "  "
+            for j in range(max_length - len(i[0]+i[1])):
+                spaces = spaces + " "
+            print i[0], '&', i[1], '\b:' + spaces + 'run', i[2], '-', i[3]
 
 # ====================================
 # HELPER FUNCTIONS
