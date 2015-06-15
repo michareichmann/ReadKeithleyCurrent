@@ -8,7 +8,7 @@ import argparse
 import glob
 import array
 from datetime import datetime, time
-from time import time
+from time import time, sleep
 from collections import OrderedDict
 from functions import RunInfo, KeithleyInfo
 import functions
@@ -107,8 +107,8 @@ p8.cd()
 # pt = ROOT.TPaveText(.02,.1,.98,.9)
 title_text1 = "PSI" + functions.convert_run(args.start)
 title_text2 = "Flux = " + str(x.flux) + " kHz/cm^{2}"
+bla = str((int(args.stop) + int(args.start)) / 2 + 1)
 if not run_mode:
-    bla = str((int(args.stop) + int(args.start)) / 2)
     title_text1 = "PSI" + functions.convert_run(args.start) + " - " + args.stop
     title_text2 = 'all runs of ' + x.get_info(bla, "diamond 1") + ' & ' + x.get_info(bla, "diamond 2")
 
@@ -131,6 +131,10 @@ def get_pad(index):
     elif index == 2:
         p5.cd()
 
+
+# keithleys = OrderedDict([("Keithley1", "Silicon"),
+#                           ("Keithley2", "II-6-94"),
+#                           ("Keithley3", "S129")])
 # draw the graphs
 for key, value in x.keithleys.items():
     ind = x.keithleys.items().index((key, value))
@@ -142,6 +146,9 @@ for key, value in x.keithleys.items():
     dy = x.dy[key]
     ymax = max(x.current_y[key]) + dy
     ymin = min(x.current_y[key]) - dy
+    if len(x.current_y[key]) < 2:
+        ymax = 1
+        ymin = 0
 
     # Graph Current
     g1 = root_stuff.graph1(key, x.time_x, x.current_y)
@@ -171,6 +178,7 @@ for key, value in x.keithleys.items():
     h1 = root_stuff.frame1(p2, key, x.time_x, x.current_y, dx, dy)
     if not run_mode:
         for i in range(int(args.start), int(args.stop) + 1):
+            # if len(x.current_y[key]) > 2:
             s1 = functions.convert_time(x.get_time(i, "start time"))
             s2 = functions.convert_time(x.get_time(i, "stop time"))
             a2 = ROOT.TGaxis(s1, ymin, s1, ymax, ymin, ymax, 510, "+SU")
@@ -186,11 +194,12 @@ for key, value in x.keithleys.items():
             a3.SetTickSize(0)
             a3.SetLabelSize(0)
             # draw only for runs longer than 4 minutes
-            if s2 - s1 > 20 * 60:
-                a2.Draw()
-                a3.Draw()
+            # if s2 - s1 > 10 * 60:
+            a2.Draw()
+            a3.Draw()
             objects.append(a2)
             objects.append(a3)
+            c.Update()
     g1.Draw("P")
 
     # save the stuff s.t. it wont get lost in the loop

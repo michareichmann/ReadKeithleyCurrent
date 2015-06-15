@@ -173,8 +173,10 @@ class KeithleyInfo(RunInfo):
         valid_logs = []
         start_log = 0
         break_loop = False
-        x = 8
         for i in range(len(self.get_lognames())):
+            if i == len(self.get_lognames()) - 1:
+                start_log = i
+                break
             first_line = ""
             data = open(self.get_lognames()[i], 'r')
             sys.stdout.flush()
