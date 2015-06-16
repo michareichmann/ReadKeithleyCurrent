@@ -36,6 +36,9 @@ class RunInfo:
         self.pixels = self.data[self.start_run]["masked pixels"]
         self.first = self.first_run()
         self.last = self.last_run()
+        self.run_start = start
+        self.run_stop = stop
+        self.type = self.data[self.start_run]["type"]
 
     def first_run(self):
         first_run = self.data.iterkeys().next()
@@ -138,7 +141,8 @@ def convert_run(number):
 
 # prints elapsed time
 def elapsed_time(start):
-    print 'elapsed time:', '{0:0.2f}'.format(time() - start), 'seconds'
+    string = str('{0:0.2f}'.format(time() - start)) + ' seconds'
+    return string
 
 
 # ====================================
@@ -158,9 +162,6 @@ class KeithleyInfo(RunInfo):
         self.time_x = data[0]
         self.current_y = data[1]
         self.voltage_y = data[2]
-        d = self.get_dxy()
-        self.dx = d[0]
-        self.dy = d[1]
 
     def get_lognames(self):
         log_names = []
@@ -274,13 +275,6 @@ class KeithleyInfo(RunInfo):
                     else:
                         dicts[i][key] = [0]
                         dicts[i][key] = [0]
-
-    def get_dxy(self):
-        d = [self.create_dicts(), self.create_dicts()]
-        for key in self.keithleys:
-            d[0][key] = 0.05 * (max(self.time_x[key]) - min(self.time_x[key]))
-            d[1][key] = 0.1 * (max(self.current_y[key]) - min(self.current_y[key]))
-        return d
 
     def relative_time(self):
         for key in self.keithleys:

@@ -3,17 +3,12 @@
 # ====================================
 # IMPORTS
 # ====================================
-import json
 import argparse
-import glob
-import array
-from datetime import datetime, time
-from time import time, sleep
-from collections import OrderedDict
+from time import time
 from functions import RunInfo, KeithleyInfo
 import functions
-import root_stuff
-import ROOT
+from root_stuff import RootGraphs
+from ROOT import gROOT
 
 # measure time:
 start_time = time()
@@ -50,9 +45,7 @@ if args.stop != "-1":
 if args.dia_runs:
     x = RunInfo(args.jsonfile)
     x.print_dia_runs()
-    # for i in x.dia_runs():
-    #     print i
-    x.elapsed_time(start_time)
+    print 'elapsed time:', functions.elapsed_time(start_time)
     exit()
 
 # ====================================
@@ -61,7 +54,7 @@ if args.dia_runs:
 if args.first_last:
     x = RunInfo(args.jsonfile)
     x.print_times()
-    x.elapsed_time(start_time)
+    print 'elapsed time:', functions.elapsed_time(start_time)
     exit()
 
 
@@ -73,152 +66,36 @@ print x.log_names[0]
 if not args.save:
     print 'start:', x.start
     print 'stop: ', x.stop
-    print 'this took ', time() - start_time, ' seconds'
+    print 'class instantiation:', functions.elapsed_time(start_time)
 
 # convert to relative time
 if args.rel_time:
     x.relative_time()
 
-# create the canvas
+
+# ====================================
+# PROCESS DATA WITH ROOT
+# ====================================
+# switch off printing the canvas for the save mode
 if args.save:
-    ROOT.gROOT.SetBatch(1)
+    gROOT.SetBatch(1)
 
-canvas_name = "Keithley Currents for Run " + args.start
-if not run_mode:
-    canvas_name = "Keithley Currents from " + args.start + " to " + args.stop
+# start class instance
+z = RootGraphs(x, run_mode)
 
-c = ROOT.TCanvas("c", canvas_name, 1000, 1000)
-# c.Divide(1, 3)
-c.SetFillColor(0)  # was 17
-objects = []
-
-space = 0.015
-title = 0.93
-p5 = ROOT.TPad("p5", "", space, space, 1 - space, title / 3 - space / 2)
-p6 = ROOT.TPad("p6", "", space, title / 3 + space / 2, 1 - space, title * 2 / 3 - space / 2)
-p7 = ROOT.TPad("p7", "", space, title * 2 / 3 + space / 2, 1 - space, title - space / 2)
-p8 = ROOT.TPad("p8", "", space, title, 1 - space, 1)
-p5.Draw()
-p6.Draw()
-p7.Draw()
-p8.Draw()
-
-p8.cd()
-# pt = ROOT.TPaveText(.02,.1,.98,.9)
-title_text1 = "PSI" + functions.convert_run(args.start)
-title_text2 = "Flux = " + str(x.flux) + " kHz/cm^{2}"
-bla = str((int(args.stop) + int(args.start)) / 2 + 1)
-if not run_mode:
-    title_text1 = "PSI" + functions.convert_run(args.start) + " - " + args.stop
-    title_text2 = 'all runs of ' + x.get_info(bla, "diamond 1") + ' & ' + x.get_info(bla, "diamond 2")
-
-t2 = ROOT.TText(0.01, 0.31, title_text1)
-t2.SetTextSize(0.5)
-t2.SetTextAlign(11)
-
-t3 = ROOT.TText(0.99, 0.31, title_text2)
-t3.SetTextSize(0.5)
-t3.SetTextAlign(31)
-t3.Draw()
-t2.Draw()
+# run main loop
+z.main_loop()
 
 
-def get_pad(index):
-    if index == 0:
-        p7.cd()
-    elif index == 1:
-        p6.cd()
-    elif index == 2:
-        p5.cd()
-
-
-# keithleys = OrderedDict([("Keithley1", "Silicon"),
-#                           ("Keithley2", "II-6-94"),
-#                           ("Keithley3", "S129")])
-# draw the graphs
-for key, value in x.keithleys.items():
-    ind = x.keithleys.items().index((key, value))
-    # c.cd(ind + 1)
-    get_pad(ind)
-
-    # get edges of the frame
-    dx = x.dx[key]
-    dy = x.dy[key]
-    ymax = max(x.current_y[key]) + dy
-    ymin = min(x.current_y[key]) - dy
-    if len(x.current_y[key]) < 2:
-        ymax = 1
-        ymin = 0
-
-    # Graph Current
-    g1 = root_stuff.graph1(key, x.time_x, x.current_y)
-
-    # Graph Voltage
-    g2 = root_stuff.graph2(key, x.time_x, x.voltage_y)
-
-    # pad for graph g2
-    p1 = root_stuff.pad1(key)
-    h2 = root_stuff.frame2(key, x.time_x, dx, p1)
-    # p1.GetFrame().SetFillColor(0)  # was 21
-    g2.Draw("P")
-
-    # second y-axis
-    a1 = root_stuff.axis1(key, x.time_x, dx)
-
-    # title pad
-    p3 = root_stuff.pad3(key)
-    t1 = root_stuff.text1(value)
-
-    # border pad
-    p4 = root_stuff.pad4(key)
-    b1 = root_stuff.box1()
-
-    # pad for graph g1
-    p2 = root_stuff.pad2(key)
-    h1 = root_stuff.frame1(p2, key, x.time_x, x.current_y, dx, dy)
-    if not run_mode:
-        for i in range(int(args.start), int(args.stop) + 1):
-            # if len(x.current_y[key]) > 2:
-            s1 = functions.convert_time(x.get_time(i, "start time"))
-            s2 = functions.convert_time(x.get_time(i, "stop time"))
-            a2 = ROOT.TGaxis(s1, ymin, s1, ymax, ymin, ymax, 510, "+SU")
-            tit = "run " + str(i) + "  "
-            a2.SetTitle(tit)
-            a2.SetLineColor(1)
-            a2.SetTickSize(0)
-            a2.SetLabelSize(0)
-            a2.SetTitleSize(0.05)
-            a2.SetTitleOffset(0.1)
-            a3 = ROOT.TGaxis(s2, ymin, s2, ymax, ymin, ymax, 510, "-SU")
-            a3.SetLineColor(13)
-            a3.SetTickSize(0)
-            a3.SetLabelSize(0)
-            # draw only for runs longer than 4 minutes
-            # if s2 - s1 > 10 * 60:
-            a2.Draw()
-            a3.Draw()
-            objects.append(a2)
-            objects.append(a3)
-            c.Update()
-    g1.Draw("P")
-
-    # save the stuff s.t. it wont get lost in the loop
-    objects.append(a1)
-    objects.append(g1)
-    objects.append(g2)
-    objects.append(p1)
-    objects.append(p2)
-    objects.append(p3)
-    objects.append(t1)
-    objects.append(b1)
-    # objects.append(cutg2)
-
-c.Update()
-
+# ====================================
+# SAVING DATA
+# ====================================
 if args.save:
-    root_stuff.save_as(args.fileformat, c, args.start, args.stop)
+    z.save_as(args.fileformat)
 
-print "this took", time() - start_time, "seconds"
+# print time information
+print 'whole sequence:', functions.elapsed_time(start_time)
 
+# input to look at the data
 if not args.save:
     raw_input()
