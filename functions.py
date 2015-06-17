@@ -231,7 +231,9 @@ class KeithleyInfo(RunInfo):
             if first_line[1].startswith(str(self.start.year)):
                 first_line = datetime.strptime(first_line[1] + " " + first_line[2], "%Y_%m_%d %H:%M:%S")
                 if self.start < first_line:
-                    start_log = valid_logs[-2]
+                    start_log = valid_logs[0]
+                    if len(valid_logs) > 2:
+                        start_log = valid_logs[-2]
                     break_loop = True
                     break
             data.close()
