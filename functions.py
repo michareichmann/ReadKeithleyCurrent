@@ -16,29 +16,59 @@ import sys
 class RunInfo:
     """reads in information from the json file"""
 
-    def __init__(self, fname, start=50, stop="-1"):
+    def __init__(self, fname, start="50", stop="-1"):
+        # load json
         self.f = open(fname, 'r')
-        # self.run = convert_run(run)
-        self.start_run = convert_run(start)
-        self.stop_run = self.get_stop_run(stop)
         self.data = json.load(self.f, object_pairs_hook=OrderedDict)
-        self.date_start = self.data[self.start_run]["begin date"]
-        self.date_stop = self.data[self.stop_run]["begin date"]
-        s1 = self.date_start + " " + self.data[self.start_run]["start time"]
-        self.start = datetime.strptime(s1, "%m/%d/%Y %H:%M:%S")
-        self.stop = datetime.strptime(self.s2(), "%m/%d/%Y %H:%M:%S")
-        d1 = self.data[self.start_run]["diamond 1"]
-        d2 = self.data[self.start_run]["diamond 2"]
-        self.dia1 = d1 if d1 != "none" else "Diamond Front"
-        self.dia2 = d2 if d2 != "none" else "Diamond Back"
-        self.flux = self.data[self.start_run]["measured flux"]
-        self.rate = self.data[self.start_run]["raw rate"]
-        self.pixels = self.data[self.start_run]["masked pixels"]
+        self.time_mode = False
         self.first = self.first_run()
         self.last = self.last_run()
         self.run_start = start
         self.run_stop = stop
-        self.type = self.data[self.start_run]["type"]
+        if not start.isdigit():
+            self.start = datetime.strptime(start, "%Y-%m-%d.%H:%M")
+        else:
+            self.start_run = convert_run(start)
+            self.date_start = self.data[self.start_run]["begin date"]
+            s1 = self.date_start + " " + self.data[self.start_run]["start time"]
+            self.start = datetime.strptime(s1, "%m/%d/%Y %H:%M:%S")
+        if not stop.isdigit() and stop != "-1":
+            self.stop = datetime.strptime(stop, "%Y-%m-%d.%H:%M")
+            self.dia1 = "unknown"
+            self.dia2 = "unknown"
+            self.type = "time interval"
+            self.get_run_start_stop()
+            self.time_mode = True
+        else:
+            self.stop_run = self.get_stop_run(stop)
+            self.date_stop = self.data[self.stop_run]["begin date"]
+            self.stop = datetime.strptime(self.s2(), "%m/%d/%Y %H:%M:%S")
+            d1 = self.data[self.start_run]["diamond 1"]
+            d2 = self.data[self.start_run]["diamond 2"]
+            self.dia1 = d1 if d1 != "none" else "Diamond Front"
+            self.dia2 = d2 if d2 != "none" else "Diamond Back"
+            self.flux = self.data[self.start_run]["measured flux"]
+            self.rate = self.data[self.start_run]["raw rate"]
+            self.pixels = self.data[self.start_run]["masked pixels"]
+            self.type = self.data[self.start_run]["type"]
+
+    def get_run_start_stop(self):
+        found_start = False
+        stop = ""
+        for run in range(int(convert_run(self.first)), int(convert_run(self.last))+1):
+            date = self.data[str(run)]["begin date"]
+            start = self.data[str(run)]["start time"]
+            if self.start < datetime.strptime(date + " " + start, "%m/%d/%Y %H:%M:%S") and not found_start:
+                self.run_start = int(str(run)[4:])
+                found_start = True
+            if self.stop < datetime.strptime(date + " " + start, "%m/%d/%Y %H:%M:%S"):
+                self.run_stop = int(str(run-1)[4:])
+                break
+            if self.data[str(run)]["diamond 1"] != "none":
+                self.dia1 = self.data[str(run)]["diamond 1"]
+                self.dia2 = self.data[str(run)]["diamond 2"]
+        if not self.run_stop.isdigit():
+            self.run_stop = self.last
 
     def first_run(self):
         first_run = self.data.iterkeys().next()
@@ -95,6 +125,8 @@ class RunInfo:
     def get_time(self, run, info):
         date = self.data[convert_run(run)]["begin date"]
         s = date + " " + self.data[convert_run(run)][info]
+        if self.data[convert_run(run)][info] == "none":
+            s = date + " " + self.data[convert_run(run+1)]["start time"]
         s = datetime.strptime(s, "%m/%d/%Y %H:%M:%S")
         return s
 
@@ -119,8 +151,10 @@ class RunInfo:
 # ====================================
 # convert datetime to number in seconds
 def convert_time(date_time):
-    string = date_time.day * 24 * 3600 + date_time.hour * 3600 + date_time.minute * 60 + date_time.second
-    return string
+    seconds = (date_time.day - 1) * 24 * 3600 + date_time.hour * 3600 + date_time.minute * 60 + date_time.second
+    if date_time.month == 6:
+        seconds += 31 * 3600 * 24
+    return seconds
 
 
 # converts the entered run number
@@ -151,13 +185,16 @@ def elapsed_time(start):
 class KeithleyInfo(RunInfo):
     """reads in information from the keithley log file"""
 
-    def __init__(self, log, jsonfile, start, stop):
+    def __init__(self, log, jsonfile, start, stop, number):
+        self.single_mode = (True if number == "1" else False)
         RunInfo.__init__(self, jsonfile, start, stop)
-        self.log_dir = str(log) + "keithleyLog_" + str(self.start.year) + "*"
-        self.log_names = self.logs_from_start()
         self.keithleys = OrderedDict([("Keithley1", "Silicon"),
                                       ("Keithley2", str(self.dia1)),
                                       ("Keithley3", str(self.dia2))])
+        if self.single_mode:
+            self.keithleys = OrderedDict([("Keithley1", "Keithley1")])
+        self.log_dir = str(log) + "keithleyLog_" + str(self.start.year) + "*"
+        self.log_names = self.logs_from_start()
         data = self.find_data()
         self.time_x = data[0]
         self.current_y = data[1]

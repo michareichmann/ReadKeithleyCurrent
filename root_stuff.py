@@ -33,28 +33,31 @@ def make_transparent(pad):
 
 def write_run(run):
     if int(run) < 10:
-        run = "00" + run
+        run = "00" + str(run)
     elif int(run) < 100:
-        run = "0" + run
-    return run
+        run = "0" + str(run)
+    return str(run)
 
 
 # ====================================
 # ROOT CLASS
 # ====================================
 class RootGraphs:
-    def __init__(self, infos, run_mode):
+    def __init__(self, infos, run_mode, number):
+        self.number = (True if number == "1" else False)
         self.runmode = run_mode
         self.infos = infos
         self.c = TCanvas("c", self.canvas_name(), 1000, 1000)
         # dividing canvas into pads
-        self.p5 = ROOT.TPad("p5", "", space, space, 1 - space, title / 3 - space / 2)
-        self.p6 = ROOT.TPad("p6", "", space, title / 3 + space / 2, 1 - space, title * 2 / 3 - space / 2)
-        self.p7 = ROOT.TPad("p7", "", space, title * 2 / 3 + space / 2, 1 - space, title - space / 2)
-        self.p8 = ROOT.TPad("p8", "", 0, title, 1, 1)
+        self.p5 = TPad("p5", "", space, space, 1 - space, title / 3 - space / 2)
+        self.p6 = TPad("p6", "", space, title / 3 + space / 2, 1 - space, title * 2 / 3 - space / 2)
+        self.p7 = TPad("p7", "", space, title * 2 / 3 + space / 2, 1 - space, title - space / 2)
+        if number == "1":
+            self.p7 = TPad("p7", "", space, space, 1 - space, title - space / 2)
+        self.p8 = TPad("p8", "", 0, title, 1, 1)
         self.draw_pads()
         # title texts
-        self.t2 = TPaveText(0, 0, 0.5, 0.7, "NB")
+        self.t2 = TPaveText(0, 0, 1, 0.7, "NB")
         self.t3 = TPaveText(0.5, 0, 1, 0.7, "NB")
         self.draw_titles()
         # graphs
@@ -102,7 +105,7 @@ class RootGraphs:
             self.p2[key].Draw()
             self.p2[key].cd()
             self.draw_frame2(key)
-            if not self.runmode:
+            if not self.runmode and not self.infos.single_mode:
                 self.make_lines(key)
             self.g1[key].Draw("P")
             ind += 1
@@ -167,6 +170,9 @@ class RootGraphs:
             a1.CenterTitle()
             a1.SetTitleColor(4)
             a1.SetLabelSize(0.05)
+            if self.number:
+                a1.SetLabelSize(0.025)
+                a1.SetTitle('')
             a1.SetLineColor(4)
             a1.SetLabelColor(4)
             a1.SetLabelOffset(0.01)
@@ -185,9 +191,9 @@ class RootGraphs:
             self.xmax[key] = max(self.infos.time_x[key]) + dx
 
     def canvas_name(self):
-        canvas_name = "Keithley Currents for Run " + self.infos.run_start
+        canvas_name = "Keithley Currents for Run " + str(self.infos.run_start)
         if not self.runmode:
-            canvas_name = "Keithley Currents from " + self.infos.run_start + " to " + self.infos.run_stop
+            canvas_name = "Keithley Currents from " + str(self.infos.run_start) + " to " + str(self.infos.run_stop)
         return canvas_name
 
     def set_canvas(self, color):
@@ -204,14 +210,20 @@ class RootGraphs:
         sig_type = self.infos.type
         if sig_type != "signal" and sig_type != "pedestal" and sig_type != "pedastal":
             sig_type = "unknown"
-        title_text1 = "PSI" + self.infos.start_run + " - " + sig_type + " run"
-        title_text2 = "Flux = " + str(self.infos.flux) + " kHz/cm^{2}"
-        if self.infos.flux == -1:
-            title_text2 = "Flux not measured"
-        middle_run = str((int(self.infos.run_stop) + int(self.infos.run_start)) / 2 + 1)
-        if not self.runmode:
-            title_text1 = "PSI" + functions.convert_run(self.infos.run_start) + " - " + self.infos.run_stop
-            title_text2 = 'all runs of ' + self.infos.get_info(middle_run, "diamond 1") + ' & ' + self.infos.get_info(middle_run, "diamond 2")
+        title_text1 = 'Overview of all runs of ' + self.infos.dia1 + ' & ' + self.infos.dia2
+        title_text2 = ""
+        if self.infos.single_mode:
+            title_text1 = str(self.infos.start) + " - " + str(self.infos.stop)
+            title_text2 = ""
+        elif not self.infos.time_mode:
+            title_text1 = "PSI" + self.infos.start_run + " - " + sig_type + " run"
+            title_text2 = "Flux = " + str(self.infos.flux) + " kHz/cm^{2}"
+            if self.infos.flux == -1:
+                title_text2 = "Flux not measured"
+            middle_run = str((int(self.infos.run_stop) + int(self.infos.run_start)) / 2 + 1)
+            if not self.runmode:
+                title_text1 = "PSI" + functions.convert_run(self.infos.run_start) + " - " + self.infos.run_stop
+                title_text2 = 'all runs of ' + self.infos.get_info(middle_run, "diamond 1") + ' & ' + self.infos.get_info(middle_run, "diamond 2")
         self.t2.AddText(title_text1)
         self.t2.SetAllWith("", "Align", 11)
         self.t2.SetAllWith("", "Size", 0.5)
@@ -221,7 +233,8 @@ class RootGraphs:
         self.t3.SetAllWith("", "Size", 0.5)
         self.t3.SetFillColor(0)
         self.t2.Draw()
-        self.t3.Draw()
+        if not self.infos.time_mode:
+            self.t3.Draw()
 
     def make_graphs(self):
         for key in self.infos.keithleys:
@@ -229,6 +242,7 @@ class RootGraphs:
             # current
             y = array.array('d', self.infos.current_y[key])
             g1 = TGraph(len(x), x, y)
+            g1.SetName("current")
             g1.SetMarkerColor(2)
             g1.SetMarkerSize(marker_size)
             g1.SetMarkerStyle(20)
@@ -279,6 +293,10 @@ class RootGraphs:
         h2.GetYaxis().SetLabelSize(0.05)
         h2.GetYaxis().SetTitleSize(axis_title_size)
         h2.GetYaxis().SetTitleOffset(0.58)
+        if self.number:
+            h2.GetXaxis().SetLabelSize(0.025)
+            h2.GetYaxis().SetLabelSize(0.025)
+            h2.GetYaxis().SetTitle("")
 
     # frame for current
     def draw_frame1(self, key):
@@ -291,19 +309,21 @@ class RootGraphs:
     # save the root to file
     def save_as(self, formats):
         # check if dir exists
-        dir = os.path.dirname("runs/")
+        dirs = os.path.dirname("runs/")
         try:
-            os.stat(dir)
-        except:
-            os.mkdir(dir)
-        run = write_run(self.infos.run_start) + '-' + write_run(self.infos.run_stop)
-        if self.infos.run_stop == '-1':
-            run = write_run(self.infos.run_start)
+            os.stat(dirs)
+        except OSError:
+            os.mkdir(dirs)
+        run = 'run' + write_run(self.infos.run_start) + '-' + write_run(self.infos.run_stop)
+        if self.infos.time_mode:
+            run = 'all_'+self.infos.dia1 + '_' + self.infos.dia2 + '(' + write_run(self.infos.run_start) + '-' + write_run(self.infos.run_stop) + ')'
+        elif self.infos.run_stop == '-1':
+            run = 'run' + write_run(self.infos.run_start)
         if formats == "all":
             ftypes = [".pdf", ".eps", ".root"]
             for ftype in ftypes:
-                filename = "runs/run" + str(run) + ftype
+                filename = "runs/" + str(run) + ftype
                 self.c.SaveAs(filename)
         else:
-            filename = "runs/run" + str(run) + "." + str(formats)
+            filename = "runs/" + str(run) + "." + str(formats)
             self.c.SaveAs(filename)

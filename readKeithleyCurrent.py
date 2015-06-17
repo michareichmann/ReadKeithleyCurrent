@@ -28,6 +28,7 @@ parser.add_argument("-s", "--save", action="store_true", help="enter -s to save 
 parser.add_argument("-f", "--fileformat", nargs='?', default="pdf", help="enter file format e.g. pdf")
 parser.add_argument("-rt", "--rel_time", action="store_true", help="enter -rt to start the time axis from zero")
 parser.add_argument("-d", "--dia_runs", action="store_true", help="enter -d to plot the current as long as dia was in")
+parser.add_argument("-n", "--number", nargs='?', default="3", help="enter number of keithleys")
 args = parser.parse_args()
 
 
@@ -61,7 +62,7 @@ if args.first_last:
 # ====================================
 # GET INFO FROM JSON AND KEIHTLEY LOG
 # ====================================
-x = KeithleyInfo(args.logsKeithley, args.jsonfile, args.start, args.stop)
+x = KeithleyInfo(args.logsKeithley, args.jsonfile, args.start, args.stop, args.number)
 print x.log_names[0]
 if not args.save:
     print 'start:', x.start
@@ -81,7 +82,7 @@ if args.save:
     gROOT.SetBatch(1)
 
 # start class instance
-z = RootGraphs(x, run_mode)
+z = RootGraphs(x, run_mode, args.number)
 
 # run main loop
 z.main_loop()

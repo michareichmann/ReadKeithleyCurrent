@@ -1,4 +1,5 @@
 #ignore log and test folders
+testlogs/
 logs/
 eudaq_logs/
 testing/
