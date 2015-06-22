@@ -212,12 +212,9 @@ class KeithleyInfo(RunInfo):
         start_log = 0
         break_loop = False
         for i in range(len(self.get_lognames())):
-            if i == len(self.get_lognames()) - 1:
-                start_log = i
-                break
             first_line = ""
             data = open(self.get_lognames()[i], 'r')
-            sys.stdout.flush()
+            # sys.stdout.flush()
             for line in data:
                 first_line = line.split()
                 if len(first_line) == 0:
@@ -236,6 +233,10 @@ class KeithleyInfo(RunInfo):
                         start_log = valid_logs[-2]
                     break_loop = True
                     break
+            # take last logfile if nothing is found until then
+            if i == len(self.get_lognames()) - 1 and start_log == 0:
+                start_log = i
+                break
             data.close()
             if break_loop:
                 break
@@ -275,10 +276,10 @@ class KeithleyInfo(RunInfo):
                         stop = True
                         break
             data.close()
-            self.check_empty(dicts)
-            ind += 1
             if stop:
                 break
+        self.check_empty(dicts)
+        ind += 1
         return dicts
 
     def find_start(self, data):

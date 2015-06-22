@@ -3,7 +3,7 @@
 if [ ! -d $PWD/logs ]; then
     mkdir -p $PWD/logs
 fi
-rsync -aP daq:~/sdvlp/keithleyClient/PSI1505/keithleyLog*.txt $PWD/logs
+rsync -aP daq:~/sdvlp/keithleyClient/keithleyLog*.txt $PWD/testlogs
 
 if [ ! -d $PWD/eudaq_logs ]; then
     mkdir -p $PWD/eudaq_logs

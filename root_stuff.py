@@ -281,7 +281,7 @@ class RootGraphs:
         h2.GetXaxis().SetTitle("#font[22]{time [hh:mm]}")
         h2.GetXaxis().CenterTitle()
         h2.GetXaxis().SetTimeFormat("%H:%M")
-        h2.GetXaxis().SetTimeOffset(1486249200)
+        h2.GetXaxis().SetTimeOffset(-3600)
         h2.GetXaxis().SetTimeDisplay(1)
         h2.GetXaxis().SetLabelSize(0.05)
         h2.GetXaxis().SetTitleSize(axis_title_size)
