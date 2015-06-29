@@ -2,7 +2,7 @@
 # IMPORTS
 # ====================================
 import glob
-from datetime import datetime, time
+from datetime import datetime
 import json
 from collections import OrderedDict
 import operator
@@ -192,7 +192,7 @@ class KeithleyInfo(RunInfo):
                                       ("Keithley3", str(self.dia2))])
         if self.single_mode:
             self.keithleys = OrderedDict([("Keithley1", "Keithley1")])
-        self.log_dir = str(log) + "keithleyLog_" + str(self.start.year) + "*"
+        self.log_dir = str(log) + "/HV*"
         self.log_names = self.logs_from_start()
         data = self.find_data()
         self.time_x = data[0]
@@ -207,37 +207,17 @@ class KeithleyInfo(RunInfo):
         return log_names
 
     def get_start_log(self):
-        valid_logs = []
         start_log = 0
-        break_loop = False
-        for i in range(len(self.get_lognames())):
-            first_line = ""
-            data = open(self.get_lognames()[i], 'r')
-            # sys.stdout.flush()
-            for line in data:
-                first_line = line.split()
-                if len(first_line) == 0:
-                    break
-                if first_line[1].startswith(str(self.start.year)):
-                    valid_logs.append(i)
-                    break
-            # if whole file is empty continue
-            if len(first_line) == 0:
-                continue
-            if first_line[1].startswith(str(self.start.year)):
-                first_line = datetime.strptime(first_line[1] + " " + first_line[2], "%Y_%m_%d %H:%M:%S")
-                if self.start < first_line:
-                    start_log = valid_logs[0]
-                    if len(valid_logs) > 2:
-                        start_log = valid_logs[-2]
-                    break_loop = True
-                    break
-            # take last logfile if nothing is found until then
-            if i == len(self.get_lognames()) - 1 and start_log == 0:
+        log_names = self.get_lognames()
+        for i in range(len(log_names)):
+            name = log_names[i].strip('.log').split('_')
+            log_date = ""
+            for j in range(4, 10):
+                log_date += name[j] + " "
+            log_date = log_date.strip(' ')
+            log_date = datetime.strptime(log_date, "%Y %m %d %H %M %S")
+            if log_date < self.start:
                 start_log = i
-                break
-            data.close()
-            if break_loop:
                 break
         return start_log
 
@@ -253,24 +233,34 @@ class KeithleyInfo(RunInfo):
             dicts[key] = []
         return dicts
 
+    @staticmethod
+    def get_log_date(name):
+        name = name.strip('.log').split('_')
+        log_date = ""
+        for i in range(4, 7):
+            log_date += name[i] + "-"
+        log_date = log_date.strip('-')
+        return log_date
+
     def find_data(self):
         dicts = [self.create_dicts(), self.create_dicts(), self.create_dicts()]
         stop = False
         ind = 0
         for name in self.log_names:
+            log_date = self.get_log_date(name)
             data = open(name, 'r')
             if ind == 0:
-                self.find_start(data)
+                self.find_start(data, log_date)
             for line in data:
                 info = line.split()
-                if info[1].startswith(str(self.start.year)):
-                    now = datetime.strptime(info[1] + " " + info[2], "%Y_%m_%d %H:%M:%S")
+                if self.is_float(info[1]):
+                    now = datetime.strptime(log_date + " " + info[0], "%Y-%m-%d %H:%M:%S")
                     for key in self.keithleys:
-                        if len(info) > 3 and info[0].startswith(key):
+                        if len(info) > 2:
                             if self.start < now < self.stop:
                                 dicts[0][key].append(convert_time(now))
-                                dicts[1][key].append(float(info[4]) * 1e9)
-                                dicts[2][key].append(float(info[3]))
+                                dicts[1][key].append(float(info[2]) * 1e9)
+                                dicts[2][key].append(float(info[1]))
                     if self.stop < now:
                         stop = True
                         break
@@ -281,7 +271,7 @@ class KeithleyInfo(RunInfo):
         ind += 1
         return dicts
 
-    def find_start(self, data):
+    def find_start(self, data, log_date):
         lines = len(data.readlines())
         was_lines = 0
         data.seek(0)
@@ -294,8 +284,8 @@ class KeithleyInfo(RunInfo):
                     info = data.readline().split()
                     if not info:
                         break
-                    if info[1].startswith(str(self.start.year)):
-                        now = datetime.strptime(info[1] + " " + info[2], "%Y_%m_%d %H:%M:%S")
+                    if self.is_float(info[1]):
+                        now = datetime.strptime(log_date + " " + info[0], "%Y-%m-%d %H:%M:%S")
                         if now < self.start:
                             was_lines += lines
                             break
@@ -321,6 +311,14 @@ class KeithleyInfo(RunInfo):
             for i in range(len(self.time_x[key])):
                 self.time_x[key][i] = self.time_x[key][i] - zero
         return self.time_x
+
+    @staticmethod
+    def is_float(string):
+        try:
+            float(string)
+            return True
+        except ValueError:
+            return False
 
 # ====================================
 # BACKUP IF THERE IS NO JSON
@@ -384,3 +382,6 @@ class KeithleyInfo(RunInfo):
 #     interval[0] = datetime.strptime(interval[0], "%Y-%m-%d %H:%M:%S.%f")
 #     interval[1] = datetime.strptime(interval[1], "%Y-%m-%d %H:%M:%S.%f")
 #     return interval
+
+if __name__ == '__main__':
+    test = KeithleyInfo('logs_237', 'test.json', '2015-06-29.10:50', '2015-06-29.12:00', '1')

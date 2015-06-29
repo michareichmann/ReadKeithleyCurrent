@@ -1,6 +1,7 @@
 #ignore log and test folders
 testlogs/
 logs/
+log*
 eudaq_logs/
 testing/
 pics/
@@ -9,6 +10,7 @@ test.sh
 ping.py
 
 
-#ignore python bytecode and temp files
+#ignore python bytecode and temp files and hidden files
 *~
 *.pyc
+.*
