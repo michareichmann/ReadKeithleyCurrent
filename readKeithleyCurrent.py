@@ -9,6 +9,7 @@ from functions1 import RunInfo, KeithleyInfo
 import functions
 from root_stuff import RootGraphs
 from ROOT import gROOT
+from analysis import Analysis
 
 # measure time:
 start_time = time()
@@ -83,9 +84,11 @@ if args.save:
 
 # start class instance
 z = RootGraphs(x, run_mode, args.number)
+# test = Analysis(x, run_mode, args.number)
 
 # run main loop
 z.main_loop()
+# test.main_loop()
 
 
 # ====================================

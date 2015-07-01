@@ -1,10 +1,8 @@
 # ====================================
 # IMPORTS
 # ====================================
-import ROOT
-from ROOT import TCanvas, TPad, TGaxis, TText, TGraph, TBox, TPaveText, gStyle
+from ROOT import TCanvas, TPad, TGaxis, TText, TGraph, TBox, TPaveText, gStyle, TH1F, TH1
 import array
-from functions import KeithleyInfo
 import functions
 import os
 
@@ -125,7 +123,7 @@ class RootGraphs:
             ymin = self.ymin[key]
             ymax = self.ymax[key]
             start = functions.convert_time(self.infos.get_time(i, "start time"))
-            a2 = ROOT.TGaxis(start, ymin, start, ymax, ymin, ymax, 510, "+SU")
+            a2 = TGaxis(start, ymin, start, ymax, ymin, ymax, 510, "+SU")
             tit = "run " + str(i) + "  "
             a2.SetTitle(tit)
             a2.SetLineColor(1)
@@ -135,7 +133,7 @@ class RootGraphs:
             a2.SetTitleOffset(0.1)
             # run stop
             stop = functions.convert_time(self.infos.get_time(i, "stop time"))
-            a3 = ROOT.TGaxis(stop, ymin, stop, ymax, ymin, ymax, 510, "-SU")
+            a3 = TGaxis(stop, ymin, stop, ymax, ymin, ymax, 510, "-SU")
             a3.SetLineColor(13)
             a3.SetTickSize(0)
             a3.SetLabelSize(0)
@@ -149,7 +147,7 @@ class RootGraphs:
 
     def make_pad_title(self):
         for key, value in self.infos.keithleys.items():
-            t1 = ROOT.TText(0.08, 0.88, value)
+            t1 = TText(0.08, 0.88, value)
             t1.SetTextSize(0.09)
             self.t1[key] = t1
 
@@ -264,13 +262,13 @@ class RootGraphs:
             p1.SetMargin(left_margin, 0.07, 0.15, 0.15)
             self.p1[key] = p1
             # current
-            p2 = ROOT.TPad("p2_" + key, "", 0, 0, 1, 1)
+            p2 = TPad("p2_" + key, "", 0, 0, 1, 1)
             p2.SetGridx()
             p2.SetMargin(left_margin, 0.07, 0.15, 0.15)
             make_transparent(p2)
             self.p2[key] = p2
             # pad title + box
-            p3 = ROOT.TPad("p3_" + key, "", 0, 0, 1, 1)
+            p3 = TPad("p3_" + key, "", 0, 0, 1, 1)
             make_transparent(p3)
             self.p3[key] = p3
 

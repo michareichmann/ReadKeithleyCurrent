@@ -10,6 +10,9 @@ from time import time
 import sys
 
 
+do_averaging = True
+
+
 # ====================================
 # CLASS FOR RUN INFO FROM JSON
 # ====================================
@@ -251,6 +254,10 @@ class KeithleyInfo(RunInfo):
             data = open(name, 'r')
             if ind == 0:
                 self.find_start(data, log_date)
+            aver = 1
+            numb = 10
+            mean_curr = 0
+            weight = .97
             for line in data:
                 info = line.split()
                 if self.is_float(info[1]):
@@ -258,9 +265,20 @@ class KeithleyInfo(RunInfo):
                     for key in self.keithleys:
                         if len(info) > 2:
                             if self.start < now < self.stop:
+                                if do_averaging:
+                                    if aver <= numb:
+                                        mean_curr += float(info[2]) * 1e9
+                                        dicts[1][key].append(mean_curr / aver)
+                                        if aver == numb:
+                                            mean_curr /= numb
+                                    else:
+                                        mean_curr = mean_curr * weight + (1 - weight) * float(info[2]) * 1e9
+                                        dicts[1][key].append(mean_curr)
+                                else:
+                                    dicts[1][key].append(float(info[2]) * 1e9)
                                 dicts[0][key].append(convert_time(now))
-                                dicts[1][key].append(float(info[2]) * 1e9)
                                 dicts[2][key].append(float(info[1]))
+                                aver += 1
                     if self.stop < now:
                         stop = True
                         break
