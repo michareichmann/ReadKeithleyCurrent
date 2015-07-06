@@ -25,7 +25,7 @@ class Analysis:
 
     def make_histos(self):
         for key in self.infos.keithleys:
-            h1 = TH1F('test', 'test', 100, 0, 0.15)
+            h1 = TH1F('test', 'test', 100, -40, 40)
             # h1.SetBit(TH1.kCanRebin)
             for current in self.infos.current_y[key]:
                 h1.Fill(current)

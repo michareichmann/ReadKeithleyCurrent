@@ -83,12 +83,14 @@ if args.save:
     gROOT.SetBatch(1)
 
 # start class instance
-z = RootGraphs(x, run_mode, args.number)
-# test = Analysis(x, run_mode, args.number)
+do_histo = False
+if not do_histo:
+    z = RootGraphs(x, run_mode, args.number)
+    z.main_loop()
+else:
+    test = Analysis(x, run_mode, args.number)
+    test.main_loop()
 
-# run main loop
-z.main_loop()
-# test.main_loop()
 
 
 # ====================================

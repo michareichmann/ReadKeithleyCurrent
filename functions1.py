@@ -5,13 +5,12 @@ import glob
 from datetime import datetime
 import json
 from collections import OrderedDict
-import operator
 from time import time
-import sys
 
 
 do_averaging = True
-
+aver_points = 20
+weight = 0.93
 
 # ====================================
 # CLASS FOR RUN INFO FROM JSON
@@ -195,8 +194,10 @@ class KeithleyInfo(RunInfo):
                                       ("Keithley3", str(self.dia2))])
         if self.single_mode:
             self.keithleys = OrderedDict([("Keithley1", "Keithley1")])
-        self.log_dir = str(log) + "/HV*"
+        self.log_dir = str(log) + "/HV*log"
         self.log_names = self.logs_from_start()
+        self.mean_curr = 0
+        self.mean_volt = 0
         data = self.find_data()
         self.time_x = data[0]
         self.current_y = data[1]
@@ -219,7 +220,7 @@ class KeithleyInfo(RunInfo):
                 log_date += name[j] + " "
             log_date = log_date.strip(' ')
             log_date = datetime.strptime(log_date, "%Y %m %d %H %M %S")
-            if log_date < self.start:
+            if log_date >= self.start:
                 start_log = i
                 break
         return start_log
@@ -250,35 +251,17 @@ class KeithleyInfo(RunInfo):
         stop = False
         ind = 0
         for name in self.log_names:
+            print name
             log_date = self.get_log_date(name)
             data = open(name, 'r')
             if ind == 0:
                 self.find_start(data, log_date)
-            aver = 1
-            numb = 10
-            mean_curr = 0
-            weight = .97
+            index = 0
             for line in data:
                 info = line.split()
                 if self.is_float(info[1]):
                     now = datetime.strptime(log_date + " " + info[0], "%Y-%m-%d %H:%M:%S")
-                    for key in self.keithleys:
-                        if len(info) > 2:
-                            if self.start < now < self.stop:
-                                if do_averaging:
-                                    if aver <= numb:
-                                        mean_curr += float(info[2]) * 1e9
-                                        dicts[1][key].append(mean_curr / aver)
-                                        if aver == numb:
-                                            mean_curr /= numb
-                                    else:
-                                        mean_curr = mean_curr * weight + (1 - weight) * float(info[2]) * 1e9
-                                        dicts[1][key].append(mean_curr)
-                                else:
-                                    dicts[1][key].append(float(info[2]) * 1e9)
-                                dicts[0][key].append(convert_time(now))
-                                dicts[2][key].append(float(info[1]))
-                                aver += 1
+                    index = self.averaging(dicts, now, info, index)
                     if self.stop < now:
                         stop = True
                         break
@@ -288,6 +271,39 @@ class KeithleyInfo(RunInfo):
         self.check_empty(dicts)
         ind += 1
         return dicts
+
+    def averaging(self, dicts, now, info, index, shifting=False):
+        for key in self.keithleys:
+            if len(info) > 2:
+                # print self.start, now, self.stop
+                if self.start < now < self.stop:
+                    index += 1
+                    if do_averaging:
+                        if not shifting:
+                            self.mean_curr += float(info[2]) * 1e9
+                            self.mean_volt += float(info[1])
+                            if index % aver_points == 0:
+                                dicts[1][key].append(self.mean_curr / aver_points)
+                                dicts[0][key].append(convert_time(now))
+                                dicts[2][key].append(self.mean_volt / aver_points)
+                                self.mean_curr = 0
+                                self.mean_volt = 0
+                        else:
+                            if index <= aver_points:
+                                self.mean_curr += float(info[2]) * 1e9
+                                dicts[1][key].append(self.mean_curr / index)
+                                if index == aver_points:
+                                    self.mean_curr /= aver_points
+                            else:
+                                mean_curr = self.mean_curr * weight + (1 - weight) * float(info[2]) * 1e9
+                                dicts[1][key].append(mean_curr)
+                            dicts[0][key].append(convert_time(now))
+                            dicts[2][key].append(float(info[1]))
+                    else:
+                        dicts[1][key].append(float(info[2]) * 1e9)
+                        dicts[0][key].append(convert_time(now))
+                        dicts[2][key].append(float(info[1]))
+        return index
 
     def find_start(self, data, log_date):
         lines = len(data.readlines())
