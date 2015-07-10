@@ -66,7 +66,7 @@ class RunInfo:
             if self.data[str(run)]["diamond 1"] != "none":
                 self.dia1 = self.data[str(run)]["diamond 1"]
                 self.dia2 = self.data[str(run)]["diamond 2"]
-        if not self.run_stop.isdigit():
+        if not self.is_float(self.run_stop):
             self.run_stop = self.last
 
     def first_run(self):
@@ -144,6 +144,14 @@ class RunInfo:
                 spaces += " "
             print i[0], '&', i[1], '\b:' + spaces + 'run', i[2], '-', i[3]
 
+    @staticmethod
+    def is_float(string):
+        try:
+            float(string)
+            return True
+        except ValueError:
+            return False
+
 
 # ====================================
 # HELPER FUNCTIONS
@@ -191,7 +199,7 @@ class KeithleyInfo(RunInfo):
                                       ("Keithley2", str(self.dia1)),
                                       ("Keithley3", str(self.dia2))])
         if self.single_mode:
-            self.keithleys = OrderedDict([("Keithley1", "Keithley1")])
+            self.keithleys = OrderedDict([("Keithley2", "II6-94")])
         self.log_dir = str(log) + "keithleyLog_" + str(self.start.year) + "*"
         self.log_names = self.logs_from_start()
         data = self.find_data()
@@ -321,6 +329,7 @@ class KeithleyInfo(RunInfo):
             for i in range(len(self.time_x[key])):
                 self.time_x[key][i] = self.time_x[key][i] - zero
         return self.time_x
+
 
 # ====================================
 # BACKUP IF THERE IS NO JSON

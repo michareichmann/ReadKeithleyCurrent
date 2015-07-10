@@ -45,7 +45,10 @@ class RootGraphs:
         self.number = (True if number == "1" else False)
         self.runmode = run_mode
         self.infos = infos
-        self.c = TCanvas("c", self.canvas_name(), 1000, 1000)
+        if self.infos.single_mode:
+            self.c = TCanvas("c", self.canvas_name(), 1500, 1000)
+        else:
+            self.c = TCanvas("c", self.canvas_name(), 1000, 1000)
         # dividing canvas into pads
         self.p5 = TPad("p5", "", space, space, 1 - space, title / 3 - space / 2)
         self.p6 = TPad("p6", "", space, title / 3 + space / 2, 1 - space, title * 2 / 3 - space / 2)
@@ -103,7 +106,7 @@ class RootGraphs:
             self.p2[key].Draw()
             self.p2[key].cd()
             self.draw_frame2(key)
-            if not self.runmode and not self.infos.single_mode:
+            if not self.runmode:  # and not self.infos.single_mode:
                 self.make_lines(key)
             self.g1[key].Draw("P")
             ind += 1
@@ -125,12 +128,20 @@ class RootGraphs:
             start = functions.convert_time(self.infos.get_time(i, "start time"))
             a2 = TGaxis(start, ymin, start, ymax, ymin, ymax, 510, "+SU")
             tit = "run " + str(i) + "  "
-            a2.SetTitle(tit)
             a2.SetLineColor(1)
             a2.SetTickSize(0)
             a2.SetLabelSize(0)
             a2.SetTitleSize(0.05)
             a2.SetTitleOffset(0.1)
+            if self.infos.single_mode:
+                a2.SetTitleSize(0.025)
+                a2.SetTitleOffset(0.25)
+                flux = str(self.infos.data[functions.convert_run(i)]["measured flux"])
+                spaces = ""
+                for j in range(5 - len(flux)):
+                    spaces += " "
+                tit = "flux " + flux + spaces
+            a2.SetTitle(tit)
             # run stop
             stop = functions.convert_time(self.infos.get_time(i, "stop time"))
             a3 = TGaxis(stop, ymin, stop, ymax, ymin, ymax, 510, "-SU")
@@ -291,10 +302,13 @@ class RootGraphs:
         h2.GetYaxis().SetLabelSize(0.05)
         h2.GetYaxis().SetTitleSize(axis_title_size)
         h2.GetYaxis().SetTitleOffset(0.58)
-        if self.number:
+        if self.infos.single_mode:
             h2.GetXaxis().SetLabelSize(0.025)
             h2.GetYaxis().SetLabelSize(0.025)
-            h2.GetYaxis().SetTitle("")
+            h2.GetXaxis().SetTitleSize(0.05)
+            h2.GetYaxis().SetTitleSize(0.05)
+            h2.GetXaxis().SetTitleOffset(0.85)
+            h2.GetYaxis().SetTitleOffset(0.69)
 
     # frame for current
     def draw_frame1(self, key):

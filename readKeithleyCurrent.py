@@ -5,7 +5,7 @@
 # ====================================
 import argparse
 from time import time
-from functions1 import RunInfo, KeithleyInfo
+from functions import RunInfo, KeithleyInfo
 import functions
 from root_stuff import RootGraphs
 from ROOT import gROOT
