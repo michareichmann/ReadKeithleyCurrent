@@ -106,7 +106,7 @@ class RootGraphs:
             self.p2[key].Draw()
             self.p2[key].cd()
             self.draw_frame2(key)
-            if not self.runmode:  # and not self.infos.single_mode:
+            if not self.runmode and not self.infos.single_mode:
                 self.make_lines(key)
             self.g1[key].Draw("P")
             ind += 1

@@ -8,7 +8,7 @@ from collections import OrderedDict
 from time import time
 
 
-do_averaging = True
+do_averaging = False
 aver_points = 20
 weight = 0.93
 
