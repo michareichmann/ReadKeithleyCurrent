@@ -183,7 +183,8 @@ class RootGraphs:
             a1.SetLabelSize(0.05)
             if self.number:
                 a1.SetLabelSize(0.025)
-                a1.SetTitle('')
+                a1.SetTitleSize(0.05)
+                a1.SetTitleOffset(0.6)
             a1.SetLineColor(4)
             a1.SetLabelColor(4)
             a1.SetLabelOffset(0.01)
