@@ -262,6 +262,8 @@ class KeithleyInfo(RunInfo):
         stop = False
         ind = 0
         for name in self.log_names:
+            self.mean_curr = 0
+            self.mean_volt = 0
             log_date = self.get_log_date(name)
             data = open(name, 'r')
             if ind == 0:
