@@ -18,8 +18,8 @@ start_time = time()
 # PARSER
 # ====================================
 parser = argparse.ArgumentParser()
-parser.add_argument("-l1", "--logsKeithley", nargs='?', default="logs/", help="enter the filepath of the Keithley-log")
-parser.add_argument("-l2", "--jsonfile", nargs='?', default="test.json", help="enter the name of the json file")
+parser.add_argument("-d", "--logsKeithley", nargs='?', default="logs/", help="enter the filepath of the Keithley-log")
+parser.add_argument("-j", "--jsonfile", nargs='?', default="test.json", help="enter the name of the json file")
 parser.add_argument("-fl", "--first_last", action="store_true", help="enter to show first and last run")
 parser.add_argument("start", nargs='?', default="-1",
                     help="enter the runnumber without date information")
@@ -28,8 +28,9 @@ parser.add_argument("stop", nargs='?', default="-1",
 parser.add_argument("-s", "--save", action="store_true", help="enter -s to save the file")
 parser.add_argument("-f", "--fileformat", nargs='?', default="pdf", help="enter file format e.g. pdf")
 parser.add_argument("-rt", "--rel_time", action="store_true", help="enter -rt to start the time axis from zero")
-parser.add_argument("-d", "--dia_runs", action="store_true", help="enter -d to plot the current as long as dia was in")
-parser.add_argument("-n", "--number", nargs='?', default="3", help="enter number of keithleys")
+parser.add_argument("-dr", "--dia_runs", action="store_true", help="enter -d to plot the current as long as dia was in")
+parser.add_argument("-a", "--averaging", action="store_true", help="enter -d for averaging")
+parser.add_argument("-n", "--number", nargs='?', default="1", help="enter number of keithleys")
 args = parser.parse_args()
 
 
@@ -63,8 +64,8 @@ if args.first_last:
 # ====================================
 # GET INFO FROM JSON AND KEIHTLEY LOG
 # ====================================
-x = KeithleyInfo(args.logsKeithley, args.jsonfile, args.start, args.stop, args.number)
-print x.log_names[0]
+x = KeithleyInfo(args.logsKeithley, args.jsonfile, args.start, args.stop, args.number, args.averaging)
+print "starting with log file:", x.log_names[0]
 if not args.save:
     print 'start:', x.start
     print 'stop: ', x.stop

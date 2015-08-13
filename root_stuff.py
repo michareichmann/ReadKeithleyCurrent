@@ -100,8 +100,8 @@ class RootGraphs:
             # second pad with pad titles and box
             self.p3[key].Draw()
             self.p3[key].cd()
-            self.t1[key].Draw()
             self.b1.Draw("L")
+            self.t1[key].Draw()
             # third pad with current, frame and run lines
             self.p2[key].Draw()
             self.p2[key].cd()
@@ -160,6 +160,8 @@ class RootGraphs:
         for key, value in self.infos.keithleys.items():
             t1 = TText(0.08, 0.88, value)
             t1.SetTextSize(0.09)
+            if self.infos.single_mode:
+                t1.SetTextSize(0.07)
             self.t1[key] = t1
 
     @staticmethod

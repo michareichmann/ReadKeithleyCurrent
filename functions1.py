@@ -7,8 +7,6 @@ import json
 from collections import OrderedDict
 from time import time
 
-
-do_averaging = False
 aver_points = 20
 weight = 0.93
 
@@ -186,15 +184,18 @@ def elapsed_time(start):
 class KeithleyInfo(RunInfo):
     """reads in information from the keithley log file"""
 
-    def __init__(self, log, jsonfile, start, stop, number):
+    def __init__(self, log, jsonfile, start, stop, number, averaging):
         self.single_mode = (True if number == "1" else False)
+        self.do_averaging = (True if averaging else False)
         RunInfo.__init__(self, jsonfile, start, stop)
         self.keithleys = OrderedDict([("Keithley1", "Silicon"),
                                       ("Keithley2", str(self.dia1)),
                                       ("Keithley3", str(self.dia2))])
-        if self.single_mode:
-            self.keithleys = OrderedDict([("Keithley1", "Keithley1")])
         self.log_dir = str(log) + "/HV*log"
+        self.keithley_name = self.get_keithley_name()
+        print self.keithley_name
+        if self.single_mode:
+            self.keithleys = OrderedDict([("Keithley1", self.keithley_name)])
         self.log_names = self.logs_from_start()
         self.mean_curr = 0
         self.mean_volt = 0
@@ -202,6 +203,14 @@ class KeithleyInfo(RunInfo):
         self.time_x = data[0]
         self.current_y = data[1]
         self.voltage_y = data[2]
+
+    def get_keithley_name(self):
+        name = self.log_dir.split('/')
+        for i in name:
+            if i.lower().startswith('keithley') and not i.lower().endswith('client'):
+                name = i
+                break
+        return str(name)
 
     def get_lognames(self):
         log_names = []
@@ -214,15 +223,16 @@ class KeithleyInfo(RunInfo):
         start_log = 0
         log_names = self.get_lognames()
         for i in range(len(log_names)):
-            name = log_names[i].strip('.log').split('_')
+            name = log_names[i].strip('.log').split('/')
+            name = name[-1].split('_')
             log_date = ""
-            for j in range(4, 10):
+            for j in range(3, 9):
                 log_date += name[j] + " "
             log_date = log_date.strip(' ')
             log_date = datetime.strptime(log_date, "%Y %m %d %H %M %S")
             if log_date >= self.start:
-                start_log = i
                 break
+            start_log = i
         return start_log
 
     def logs_from_start(self):
@@ -239,9 +249,10 @@ class KeithleyInfo(RunInfo):
 
     @staticmethod
     def get_log_date(name):
-        name = name.strip('.log').split('_')
+        name = name.strip('.log').split('/')
+        name = name[-1].split('_')
         log_date = ""
-        for i in range(4, 7):
+        for i in range(3, 6):
             log_date += name[i] + "-"
         log_date = log_date.strip('-')
         return log_date
@@ -251,7 +262,6 @@ class KeithleyInfo(RunInfo):
         stop = False
         ind = 0
         for name in self.log_names:
-            print name
             log_date = self.get_log_date(name)
             data = open(name, 'r')
             if ind == 0:
@@ -276,9 +286,9 @@ class KeithleyInfo(RunInfo):
         for key in self.keithleys:
             if len(info) > 2:
                 # print self.start, now, self.stop
-                if self.start < now < self.stop:
+                if self.start < now < self.stop and float(info[2]) < 1e30:
                     index += 1
-                    if do_averaging:
+                    if self.do_averaging:
                         if not shifting:
                             self.mean_curr += float(info[2]) * 1e9
                             self.mean_volt += float(info[1])
