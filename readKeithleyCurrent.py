@@ -4,7 +4,7 @@
 # IMPORTS
 # ====================================
 import argparse
-from time import time
+from time import time, sleep
 from functions1 import RunInfo, KeithleyInfo
 import functions
 from root_stuff import RootGraphs
@@ -18,8 +18,10 @@ start_time = time()
 # PARSER
 # ====================================
 parser = argparse.ArgumentParser()
-parser.add_argument("-d", "--logsKeithley", nargs='?', default="logs/", help="enter the filepath of the Keithley-log")
-parser.add_argument("-j", "--jsonfile", nargs='?', default="test.json", help="enter the name of the json file")
+default_json_file = "/home/testbeam/sdvlp/eudaqLogReader/runs_PSI_August_2015.json"
+default_log_file = "/home/testbeam/sdvlp/keithleyClient/PSI_2015_08/Keithley1"
+parser.add_argument("-d", "--logsKeithley", nargs='?', default=default_log_file, help="enter the filepath of the Keithley-log")
+parser.add_argument("-j", "--jsonfile", nargs='?', default=default_json_file, help="enter the name of the json file")
 parser.add_argument("-fl", "--first_last", action="store_true", help="enter to show first and last run")
 parser.add_argument("start", nargs='?', default="-1",
                     help="enter the runnumber without date information")
@@ -92,6 +94,10 @@ else:
     test = Analysis(x, run_mode, args.number)
     test.main_loop()
 
+#while True:
+#    x.find_data()
+#    z.print_loop()
+#    sleep(1)
 
 
 # ====================================

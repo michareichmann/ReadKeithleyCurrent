@@ -86,7 +86,23 @@ class RootGraphs:
         self.make_pad_title()
         # run lines
         self.run_lines = []
-
+        
+    def print_loop(self):
+        self.make_graphs()
+        self.make_pads()
+        self.make_margins()
+        ind = 0
+        for key in self.infos.keithleys:
+            self.goto_pad(ind)
+            ind += 1
+            self.p1[key].cd()
+            self.draw_frame1(key)
+            self.g2[key].Draw("P")
+            self.p2[key].cd()
+            self.draw_frame2(key)
+            self.g1[key].Draw("P")
+        self.c.Update()
+            
     def main_loop(self):
         ind = 0
         for key in self.infos.keithleys:

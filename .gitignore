@@ -8,6 +8,7 @@ pics/
 runs/
 test.sh
 ping.py
+updateLogs.sh
 
 
 #ignore python bytecode and temp files and hidden files
