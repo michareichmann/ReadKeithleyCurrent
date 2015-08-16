@@ -7,7 +7,7 @@ import json
 from collections import OrderedDict
 from time import time
 
-aver_points = 20
+aver_points = 50
 weight = 0.93
 
 # ====================================
@@ -92,6 +92,12 @@ class RunInfo:
         return run
 
     def s2(self):
+        if self.data[self.stop_run]["stop time"][0] < self.data[self.stop_run]["start time"][0]:
+            s = list(self.date_stop)
+            print self.date_stop
+            s[4] = str(int(s[4]) + 1)
+            self.date_stop = "".join(s)
+            print self.date_stop
         s2 = self.date_stop + " " + self.data[self.stop_run]["stop time"]
         # take the start time of next run if you don't find a stop time
         if s2 == "none":
@@ -176,6 +182,24 @@ def convert_run(number):
 def elapsed_time(start):
     string = str('{0:0.2f}'.format(time() - start)) + ' seconds'
     return string
+    
+def get_log_dir(directory):
+    K6517 = ['k6517', '6517', '6517b', 'k6517b']
+    K2657 = ['k2657', '2657', '2657a', 'k2657b', 'dia2']
+    K237 = ['k237', '237', 'dia1']
+    K1 = ['k1', 'keithley1', 'silicon', 'sil']
+    if directory.lower() in K6517:
+        return '/home/testbeam/sdvlp/keithleyClient/PSI_2015_08/Keithley6517'
+    elif directory.lower() in K2657:
+        return '/home/testbeam/sdvlp/keithleyClient/PSI_2015_08/Keithley2657A'
+    elif directory.lower() in K1:
+        return '/home/testbeam/sdvlp/keithleyClient/PSI_2015_08/Keithley1'
+    elif directory.lower() in K237:
+        return '/home/testbeam/sdvlp/keithleyClient/PSI_2015_08/Keithley237'
+    elif len(directory) < 6:
+        print "Could not find any alias for entered log file directory. exiting..."
+        exit()
+    return directory
 
 
 # ====================================

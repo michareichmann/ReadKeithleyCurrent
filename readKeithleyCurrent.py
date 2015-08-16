@@ -7,6 +7,7 @@ import argparse
 from time import time, sleep
 from functions1 import RunInfo, KeithleyInfo
 import functions
+import functions1
 from root_stuff import RootGraphs
 from ROOT import gROOT
 from analysis import Analysis
@@ -66,7 +67,8 @@ if args.first_last:
 # ====================================
 # GET INFO FROM JSON AND KEIHTLEY LOG
 # ====================================
-x = KeithleyInfo(args.logsKeithley, args.jsonfile, args.start, args.stop, args.number, args.averaging)
+log_dir = functions1.get_log_dir(args.logsKeithley)
+x = KeithleyInfo(log_dir, args.jsonfile, args.start, args.stop, args.number, args.averaging)
 print "starting with log file:", x.log_names[0]
 if not args.save:
     print 'start:', x.start
