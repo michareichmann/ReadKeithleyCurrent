@@ -2,9 +2,12 @@
 # IMPORTS
 # ====================================
 from ROOT import TCanvas, TPad, TGaxis, TText, TGraph, TBox, TPaveText, gStyle, TH1F, TH1
+import ROOT
 import array
 import functions
 import os
+import time
+import sys
 
 # infos=KeithleyInfo("df", "df", "df", "df")
 
@@ -86,6 +89,13 @@ class RootGraphs:
         self.make_pad_title()
         # run lines
         self.run_lines = []
+        self.pt = ROOT.TPaveLabel(.01,.01,.1,.1,"","NDC")
+        self.pt.ResetBit(ROOT.kCanDelete)
+        self.pt.SetFillColor(0)
+        self.pt.SetShadowColor(0)
+        self.pt.SetBorderSize(0)
+
+
         
     def print_loop(self):
         self.make_graphs()
@@ -102,30 +112,45 @@ class RootGraphs:
             self.draw_frame2(key)
             self.g1[key].Draw("P")
         self.c.Update()
-            
+    def init_loop(self):
+        ind = 0
+        for key in self.infos.keithleys:
+            self.goto_pad(ind)
+            self.p1[key].Draw()
+            self.p3[key].Draw()
+            self.p2[key].Draw()
+            ind +=1
+
     def main_loop(self):
         ind = 0
         for key in self.infos.keithleys:
             self.goto_pad(ind)
             # first pad with voltage, frame and second axis
-            self.p1[key].Draw()
+            # self.p1[key].Draw()
             self.p1[key].cd()
             self.draw_frame1(key)
             self.g2[key].Draw("P")
             self.a1[key].Draw()
             # second pad with pad titles and box
-            self.p3[key].Draw()
+            # self.p3[key].Draw()
             self.p3[key].cd()
             self.b1.Draw("L")
             self.t1[key].Draw()
             # third pad with current, frame and run lines
-            self.p2[key].Draw()
+            # self.p2[key].Draw()
             self.p2[key].cd()
             self.draw_frame2(key)
-            if not self.runmode and not self.infos.single_mode:
-                self.make_lines(key)
+            # if not self.runmode and not self.infos.single_mode:
+            #     self.make_lines(key)
             self.g1[key].Draw("P")
+            self.pt.Draw()
             ind += 1
+        self.c.Update()
+        t = time.localtime()
+        self.pt.SetLabel("%s"% time.strftime('%x - %H:%M:%S',t))
+        self.c.Update()
+
+    def update(self):
         self.c.Update()
 
     def goto_pad(self, index):
@@ -290,16 +315,20 @@ class RootGraphs:
             p1.SetFillColor(pad_color)
             p1.SetGridy()
             p1.SetMargin(left_margin, 0.07, 0.15, 0.15)
+            p1.ResetBit(ROOT.kCanDelete)
             self.p1[key] = p1
             # current
             p2 = TPad("p2_" + key, "", 0, 0, 1, 1)
             p2.SetGridx()
             p2.SetMargin(left_margin, 0.07, 0.15, 0.15)
             make_transparent(p2)
+            p2.ResetBit(ROOT.kCanDelete)
             self.p2[key] = p2
             # pad title + box
             p3 = TPad("p3_" + key, "", 0, 0, 1, 1)
             make_transparent(p3)
+            print p3.TestBit(ROOT.kCanDelete)
+            p3.ResetBit(ROOT.kCanDelete)
             self.p3[key] = p3
 
     # frame for voltage
