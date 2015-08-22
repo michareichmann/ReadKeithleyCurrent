@@ -36,10 +36,12 @@ class RunInfo:
             self.type = "time interval"
             self.get_run_start_stop()
             self.time_mode = True
+            self.update = False
         else:
             self.stop_run = self.get_stop_run(stop)
             self.date_stop = self.data[self.stop_run]["begin date"]
             self.stop = datetime.strptime(self.s2(), "%m/%d/%Y %H:%M:%S")
+            self.update = True
             d1 = self.data[self.start_run]["diamond 1"]
             d2 = self.data[self.start_run]["diamond 2"]
             self.dia1 = d1 if d1 != "none" else "Diamond Front"
@@ -57,9 +59,10 @@ class RunInfo:
             if self.start < datetime.strptime(date + " " + start, "%m/%d/%Y %H:%M:%S") and not found_start:
                 self.run_start = int(str(run)[4:])
                 found_start = True
-            if self.stop < datetime.strptime(date + " " + start, "%m/%d/%Y %H:%M:%S"):
-                self.run_stop = int(str(run-1)[4:])
-                break
+            if self.stop != -1:
+                if self.stop < datetime.strptime(date + " " + start, "%m/%d/%Y %H:%M:%S"):
+                    self.run_stop = int(str(run-1)[4:])
+                    break
             if self.data[str(run)]["diamond 1"] != "none":
                 self.dia1 = self.data[str(run)]["diamond 1"]
                 self.dia2 = self.data[str(run)]["diamond 2"]

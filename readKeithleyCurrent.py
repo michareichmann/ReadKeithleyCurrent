@@ -4,7 +4,7 @@
 # IMPORTS
 # ====================================
 import argparse
-from time import time, sleep
+from time import time, sleep, strftime, localtime
 from KeithleyInfo import KeithleyInfo
 from RunInfo import RunInfo
 import functions
@@ -40,11 +40,19 @@ parser.add_argument("-dr", "--dia_runs", action="store_true", help="enter -d to 
 parser.add_argument("-a", "--averaging", action="store_true", help="enter -d for averaging")
 parser.add_argument("-n", "--number", nargs='?', default="2", help="enter number of keithleys")
 parser.add_argument("-ap", "--points", nargs='?', default="10", help="number of averaging points")
+parser.add_argument("-l", "--loop_mode", action="store_true", help="enter -d for looping")
+parser.add_argument("-c", "--back", nargs='?', default="24", help="hours to go back", type=int)
+
 args = parser.parse_args()
 
 logs = [args.logsKeithley1, args.logsKeithley2]
-r1 = functions1.convert_date(args.start)
-r2 = functions1.convert_date(args.stop)
+if args.start != "-1":
+    r1 = functions1.convert_date(args.start)
+    r2 = functions1.convert_date(args.stop)
+else:
+    r1 = functions1.plot24(0, args.back)
+    r2 = functions1.plot24(1, args.back)
+loop_mode = True if not args.loop_mode else False
 
 # ====================================
 # SIGNAL HANDLER
@@ -58,9 +66,12 @@ def signal_handler(signal, frame):
 # ====================================
 # SINGLE RUN MODE
 # ====================================
-run_mode = True
-if args.stop != "-1":
-    run_mode = False
+run_mode = False
+try:
+    int(r1)
+    run_mode = True
+except ValueError:
+    pass
 
 
 # ====================================
@@ -89,7 +100,12 @@ log_dir = ["", ""]
 log_dir[0] = functions1.get_log_dir(logs[0])
 log_dir[1] = functions1.get_log_dir(logs[1])
 x = KeithleyInfo(log_dir, args.jsonfile, r1, r2, args.number, args.averaging, args.points)
-print "starting with log file:", x.log_names["Keithley1"][0]
+# for i in x.time_x['Keithley2']:
+#     print i
+# exit()
+print "starting with log files:"
+for key in x.keithleys:
+    print key + ":", x.log_names[key][0].split("/")[-1]
 if not args.save:
     print 'start:', x.start
     print 'stop: ', x.stop
@@ -127,13 +143,20 @@ if args.save:
 # ====================================
 # UPDATE LOOP
 # ====================================
-signal.signal(signal.SIGINT, signal_handler)
-while True:
-    print "\r%s"%time(),
-    sys.stdout.flush()
-    x.find_data()
+if loop_mode:
+    signal.signal(signal.SIGINT, signal_handler)
+    print "\nStarting loop-mode!"
+    while True:
+        print "\rlast update:", strftime("%H:%M:%S", localtime()),
+        sys.stdout.flush()
+        x.update_data()
+        z.refresh_graphs()
+        z.make_margins()
+        z.main_loop()
+        sleep(10)
+else:
     z.main_loop()
-    sleep(10)
+    raw_input()
 
 
 

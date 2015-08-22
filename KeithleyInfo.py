@@ -8,8 +8,6 @@ from RunInfo import RunInfo
 from functions1 import *
 
 weight = 0.93
-
-
 # ====================================
 # CLASS FOR THE DATA
 # ====================================
@@ -20,13 +18,16 @@ class KeithleyInfo(RunInfo):
         self.single_mode = (True if number == "1" else False)
         self.do_averaging = (True if averaging else False)
         self.points = int(points) if is_float(points) else 10
-        RunInfo.__init__(self, jsonfile, start, stop)
+        if start == -1 and stop == -1:
+
+            RunInfo.__init__(self, jsonfile, start, time()+24)
+        else:
+            RunInfo.__init__(self, jsonfile, start, stop)
         self.keithleys = OrderedDict([("Keithley1", "Silicon"),
                                       ("Keithley2", str(self.dia1)),
                                       ("Keithley3", str(self.dia2))])
         self.log_dir = [str(log[0]) + "/HV*log", str(log[1]) + "/HV*log"]
         self.keithley_name = [self.get_keithley_name(0), self.get_keithley_name(1)]
-        print self.keithley_name
         if self.single_mode:
             self.keithleys = OrderedDict([("Keithley1", self.keithley_name[0])])
         elif number == "2":
@@ -35,10 +36,13 @@ class KeithleyInfo(RunInfo):
         self.log_names = self.logs_from_start()
         self.mean_curr = 0
         self.mean_volt = 0
-        data = self.find_data()
-        self.time_x = data[0]
-        self.current_y = data[1]
-        self.voltage_y = data[2]
+        self.update_data()
+
+    def update_data(self):
+        self.data = self.find_data()
+        self.time_x = self.data[0]
+        self.current_y = self.data[1]
+        self.voltage_y = self.data[2]
 
     def get_keithley_name(self, num):
         name = self.log_dir[num].split('/')
@@ -98,28 +102,43 @@ class KeithleyInfo(RunInfo):
         return log_date
 
     def find_data(self):
+        self.log_names = self.logs_from_start()
         dicts = [self.create_dicts(), self.create_dicts(), self.create_dicts()]
-        stop = False
+        stop = [0,0,0]
         ind = 0
+        stop_ind = 0
         for key in self.keithleys:
             for name in self.log_names[key]:
                 self.mean_curr = 0
                 self.mean_volt = 0
                 log_date = self.get_log_date(name)
                 data = open(name, 'r')
+                # print 'reading', name
                 if ind == 0:
                     self.find_start(data, log_date)
                 index = 0
+                i = 0
+                info = None
                 for line in data:
                     info = line.split()
+                    if i == 0:
+                        # print info
+                        pass
+                    i += 1
                     if is_float(info[1]):
                         now = datetime.strptime(log_date + " " + info[0], "%Y-%m-%d %H:%M:%S")
                         index = self.averaging(dicts, now, info, index, key)
-                        if self.stop < now:
-                            stop = True
-                            break
+                        if self.stop != -1:
+                            if self.stop < now:
+                                stop[stop_ind] = True
+                                break
+                if info:
+                    # print i,info, len(data.readlines())
+                    # print
+                    pass
                 data.close()
-                if stop:
+                if stop[stop_ind]:
+                    stop_ind += 1
                     break
         self.check_empty(dicts)
         ind += 1
@@ -187,7 +206,10 @@ class KeithleyInfo(RunInfo):
             for key in self.keithleys:
                 if len(dicts[i][key]) == 0:
                     if i == 0:
-                        dicts[i][key] = [convert_time(self.start), convert_time(self.stop)]
+                        if self.stop != -1:
+                            dicts[i][key] = [convert_time(self.start), convert_time(self.stop)]
+                        else:
+                             dicts[i][key] = [convert_time(self.start), convert_time(time())]
                     else:
                         dicts[i][key] = [0]
                         dicts[i][key] = [0]

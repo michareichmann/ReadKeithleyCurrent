@@ -2,6 +2,7 @@
 # IMPORTS
 # ====================================
 from time import time, localtime, strftime
+from datetime import timedelta, datetime
 
 
 # ====================================
@@ -67,7 +68,7 @@ def convert_date(atime):
     try:
         int(atime)
     except ValueError:
-        print "ERRRRRROOOOOOOOOOOOR"
+        #print "ERRRRRROOOOOOOOOOOOR"
         if len(atime) > 6:
             return atime
         else:
@@ -77,4 +78,12 @@ def convert_date(atime):
             print t
             return t
     return atime
+
+def plot24(ind, hours_back):
+    if ind:
+        return strftime("%Y-%m-%d.%H:%M", localtime())
+    else:
+        t = datetime.now() - timedelta(hours=int(hours_back))
+        return t.strftime("%Y-%m-%d.%H:%M")
+
 

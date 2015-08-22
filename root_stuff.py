@@ -1,13 +1,12 @@
 # ====================================
 # IMPORTS
 # ====================================
-from ROOT import TCanvas, TPad, TGaxis, TText, TGraph, TBox, TPaveText, gStyle, TH1F, TH1
-import ROOT
+from ROOT import TCanvas, TPad, TGaxis, TText, TGraph, TBox, TPaveText, gStyle, TH1F, TH1, TPaveLabel, kCanDelete
+# import ROOT
 import array
 import functions
 import os
 import time
-import sys
 
 # infos=KeithleyInfo("df", "df", "df", "df")
 
@@ -45,9 +44,10 @@ def write_run(run):
 # ====================================
 class RootGraphs:
     def __init__(self, infos, run_mode, number):
-        self.number = (True if number == "1" else False)
+        self.number = number
         self.runmode = run_mode
         self.infos = infos
+
         if self.infos.single_mode:
             self.c = TCanvas("c", self.canvas_name(), 1500, 1000)
         else:
@@ -58,6 +58,10 @@ class RootGraphs:
         self.p7 = TPad("p7", "", space, title * 2 / 3 + space / 2, 1 - space, title - space / 2)
         if number == "1":
             self.p7 = TPad("p7", "", space, space, 1 - space, title - space / 2)
+        if number == "2":
+            padsize = (title - 2 * space) / 2
+            self.p7 = TPad("p7", "", space, 2 * space + padsize, 1 - space, 2 * space + 2 * padsize)
+            self.p6 = TPad("p6", "", space, space, 1 - space, space + padsize)
         self.p8 = TPad("p8", "", 0, title, 1, 1)
         self.draw_pads()
         # title texts
@@ -89,29 +93,12 @@ class RootGraphs:
         self.make_pad_title()
         # run lines
         self.run_lines = []
-        self.pt = ROOT.TPaveLabel(.01,.01,.1,.1,"","NDC")
-        self.pt.ResetBit(ROOT.kCanDelete)
+        self.pt = TPaveLabel(.01, .01, .1, .1, "", "NDC")
+        self.pt.ResetBit(kCanDelete)
         self.pt.SetFillColor(0)
         self.pt.SetShadowColor(0)
         self.pt.SetBorderSize(0)
 
-
-        
-    def print_loop(self):
-        self.make_graphs()
-        self.make_pads()
-        self.make_margins()
-        ind = 0
-        for key in self.infos.keithleys:
-            self.goto_pad(ind)
-            ind += 1
-            self.p1[key].cd()
-            self.draw_frame1(key)
-            self.g2[key].Draw("P")
-            self.p2[key].cd()
-            self.draw_frame2(key)
-            self.g1[key].Draw("P")
-        self.c.Update()
     def init_loop(self):
         ind = 0
         for key in self.infos.keithleys:
@@ -119,7 +106,7 @@ class RootGraphs:
             self.p1[key].Draw()
             self.p3[key].Draw()
             self.p2[key].Draw()
-            ind +=1
+            ind += 1
 
     def main_loop(self):
         ind = 0
@@ -130,7 +117,8 @@ class RootGraphs:
             self.p1[key].cd()
             self.draw_frame1(key)
             self.g2[key].Draw("P")
-            self.a1[key].Draw()
+            # self.a1[key].Draw()
+            self.a1[key].DrawAxis(self.xmax[key], -1100, self.xmax[key], 1100, -1100, 1100, 510, "+L")
             # second pad with pad titles and box
             # self.p3[key].Draw()
             self.p3[key].cd()
@@ -147,7 +135,7 @@ class RootGraphs:
             ind += 1
         self.c.Update()
         t = time.localtime()
-        self.pt.SetLabel("%s"% time.strftime('%x - %H:%M:%S',t))
+        self.pt.SetLabel("%s" % time.strftime('%x - %H:%M:%S', t))
         self.c.Update()
 
     def update(self):
@@ -222,10 +210,14 @@ class RootGraphs:
             a1.CenterTitle()
             a1.SetTitleColor(4)
             a1.SetLabelSize(0.05)
-            if self.number:
+            if self.number == "1":
                 a1.SetLabelSize(0.025)
                 a1.SetTitleSize(0.05)
                 a1.SetTitleOffset(0.6)
+            if self.number == "2":
+                a1.SetLabelSize(0.03)
+                a1.SetTitleSize(0.06)
+                a1.SetTitleOffset(0.5)
             a1.SetLineColor(4)
             a1.SetLabelColor(4)
             a1.SetLabelOffset(0.01)
@@ -308,6 +300,18 @@ class RootGraphs:
             self.g1[key] = g1
             self.g2[key] = g2
 
+    def refresh_graphs(self):
+        for key in self.infos.keithleys:
+            x = array.array('d', self.infos.time_x[key])
+            y = array.array('d', self.infos.current_y[key])
+            pos = self.g1[key].GetN()
+            for i in range(pos, len(x) - 1):
+                self.g1[key].SetPoint(i, x[i + 1], y[i + 1])
+            y = array.array('d', self.infos.voltage_y[key])
+            pos = self.g2[key].GetN()
+            for i in range(pos, len(x) - 1):
+                self.g2[key].SetPoint(i, x[i + 1], y[i + 1])
+
     def make_pads(self):
         for key in self.infos.keithleys:
             # voltage
@@ -315,20 +319,19 @@ class RootGraphs:
             p1.SetFillColor(pad_color)
             p1.SetGridy()
             p1.SetMargin(left_margin, 0.07, 0.15, 0.15)
-            p1.ResetBit(ROOT.kCanDelete)
+            p1.ResetBit(kCanDelete)
             self.p1[key] = p1
             # current
             p2 = TPad("p2_" + key, "", 0, 0, 1, 1)
             p2.SetGridx()
             p2.SetMargin(left_margin, 0.07, 0.15, 0.15)
             make_transparent(p2)
-            p2.ResetBit(ROOT.kCanDelete)
+            p2.ResetBit(kCanDelete)
             self.p2[key] = p2
             # pad title + box
             p3 = TPad("p3_" + key, "", 0, 0, 1, 1)
             make_transparent(p3)
-            print p3.TestBit(ROOT.kCanDelete)
-            p3.ResetBit(ROOT.kCanDelete)
+            p3.ResetBit(kCanDelete)
             self.p3[key] = p3
 
     # frame for voltage
@@ -357,6 +360,13 @@ class RootGraphs:
             h2.GetYaxis().SetTitleSize(0.05)
             h2.GetXaxis().SetTitleOffset(0.85)
             h2.GetYaxis().SetTitleOffset(0.69)
+        if self.number == "2":
+            h2.GetXaxis().SetLabelSize(0.03)
+            h2.GetYaxis().SetLabelSize(0.03)
+            h2.GetXaxis().SetTitleSize(0.06)
+            h2.GetYaxis().SetTitleSize(0.06)
+            h2.GetXaxis().SetTitleOffset(0.85)
+            h2.GetYaxis().SetTitleOffset(0.58)
 
     # frame for current
     def draw_frame1(self, key):
@@ -376,7 +386,7 @@ class RootGraphs:
             os.mkdir(dirs)
         run = 'run' + write_run(self.infos.run_start) + '-' + write_run(self.infos.run_stop)
         if self.infos.time_mode:
-            run = 'all_'+self.infos.dia1 + '_' + self.infos.dia2 + '(' + write_run(self.infos.run_start) + '-' + write_run(self.infos.run_stop) + ')'
+            run = 'all_' + self.infos.dia1 + '_' + self.infos.dia2 + '(' + write_run(self.infos.run_start) + '-' + write_run(self.infos.run_stop) + ')'
         elif self.infos.run_stop == '-1':
             run = 'run' + write_run(self.infos.run_start)
         if formats == "all":
