@@ -22,14 +22,14 @@ class RunInfo:
         self.last = self.last_run()
         self.run_start = start
         self.run_stop = stop
-        if not start.isdigit():
+        if not is_float(start):
             self.start = datetime.strptime(start, "%Y-%m-%d.%H:%M")
         else:
             self.start_run = convert_run(start)
             self.date_start = self.data[self.start_run]["begin date"]
             s1 = self.date_start + " " + self.data[self.start_run]["start time"]
             self.start = datetime.strptime(s1, "%m/%d/%Y %H:%M:%S")
-        if not stop.isdigit() and stop != "-1":
+        if not is_float(stop) and stop != "-1":
             self.stop = datetime.strptime(stop, "%Y-%m-%d.%H:%M")
             self.dia1 = "unknown"
             self.dia2 = "unknown"
@@ -66,7 +66,7 @@ class RunInfo:
             if self.data[str(run)]["diamond 1"] != "none":
                 self.dia1 = self.data[str(run)]["diamond 1"]
                 self.dia2 = self.data[str(run)]["diamond 2"]
-        if not self.run_stop.isdigit():
+        if not is_float(self.run_stop):
             self.run_stop = self.last
 
     def first_run(self):

@@ -118,7 +118,7 @@ class RootGraphs:
             self.draw_frame1(key)
             self.g2[key].Draw("P")
             # self.a1[key].Draw()
-            self.a1[key].DrawAxis(self.xmax[key], -1100, self.xmax[key], 1100, -1100, 1100, 510, "+L")
+            self.a1[key].DrawAxis(self.xmax[key], -1600, self.xmax[key], 1600, -1600, 1600, 510, "+L")
             # second pad with pad titles and box
             # self.p3[key].Draw()
             self.p3[key].cd()
@@ -370,7 +370,7 @@ class RootGraphs:
 
     # frame for current
     def draw_frame1(self, key):
-        h1 = self.p1[key].DrawFrame(self.xmin[key], -1100, self.xmax[key], 1100)
+        h1 = self.p1[key].DrawFrame(self.xmin[key], -1600, self.xmax[key], 1600)
         h1.GetXaxis().SetTickLength(0)
         h1.GetYaxis().SetTickLength(0)
         h1.GetXaxis().SetLabelOffset(99)
