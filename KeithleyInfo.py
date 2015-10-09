@@ -18,6 +18,7 @@ class KeithleyInfo(RunInfo):
         self.single_mode = (True if number == "1" else False)
         self.do_averaging = (True if averaging else False)
         self.points = int(points) if is_float(points) else 10
+        self.number = number
         if start == -1 and stop == -1:
 
             RunInfo.__init__(self, jsonfile, start, time()+24)
@@ -33,6 +34,7 @@ class KeithleyInfo(RunInfo):
         elif number == "2":
             self.keithleys = OrderedDict([("Keithley1", self.keithley_name[0]),
                                           ("Keithley2", self.keithley_name[1])])
+        self.dias = self.make_dict(self.dia1, self.dia2)
         self.log_names = self.logs_from_start()
         self.mean_curr = 0
         self.mean_volt = 0
@@ -220,6 +222,13 @@ class KeithleyInfo(RunInfo):
             for i in range(len(self.time_x[key])):
                 self.time_x[key][i] = self.time_x[key][i] - zero
         return self.time_x
+
+    def make_dict(self, arg1, arg2):
+        if self.single_mode:
+            return OrderedDict([("Keithley1", arg1)])
+        elif self.number == "2":
+            return OrderedDict([("Keithley1", arg1),
+                                ("Keithley2", arg2)])
 
 if __name__ == '__main__':
     test = KeithleyInfo('logs_237', 'test.json', '2015-06-29.10:50', '2015-06-29.12:00', '1', False, 10)

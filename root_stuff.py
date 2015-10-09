@@ -187,7 +187,8 @@ class RootGraphs:
 
     def make_pad_title(self):
         for key, value in self.infos.keithleys.items():
-            t1 = TText(0.08, 0.88, value)
+            text = self.infos.dias[key] + ' - ' + value
+            t1 = TText(0.08, 0.88, text)
             t1.SetTextSize(0.09)
             if self.infos.single_mode:
                 t1.SetTextSize(0.07)
@@ -349,6 +350,9 @@ class RootGraphs:
         # Y-axis
         h2.GetYaxis().SetTitleOffset(0.69)
         h2.GetYaxis().SetTitle("#font[22]{current [nA]}")
+        h2.GetYaxis().SetTitleColor(2)
+        h2.GetYaxis().SetLabelColor(2)
+        h2.GetYaxis().SetAxisColor(2)
         h2.GetYaxis().CenterTitle()
         h2.GetYaxis().SetLabelSize(0.05)
         h2.GetYaxis().SetTitleSize(axis_title_size)

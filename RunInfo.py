@@ -1,7 +1,6 @@
 # ====================================
 # IMPORTS
 # ====================================
-from datetime import datetime
 import json
 from collections import OrderedDict
 from functions1 import *
@@ -25,10 +24,14 @@ class RunInfo:
         if not is_float(start):
             self.start = datetime.strptime(start, "%Y-%m-%d.%H:%M")
         else:
-            self.start_run = convert_run(start)
-            self.date_start = self.data[self.start_run]["begin date"]
-            s1 = self.date_start + " " + self.data[self.start_run]["start time"]
-            self.start = datetime.strptime(s1, "%m/%d/%Y %H:%M:%S")
+            # self.start_run = convert_run(start)
+            self.start_run = start
+            # self.date_start = self.data[self.start_run]["begin date"]
+            self.date_start = self.data[self.start_run]["starttime0"]
+            # s1 = self.date_start + " " + self.data[self.start_run]["start time"]
+            # self.start = datetime.strptime(s1, "%m/%d/%Y %H:%M:%S")
+            self.start = datetime.strptime(self.date_start, "%Y-%m-%dT%H:%M:%SZ")
+            self.start = self.start + timedelta(hours=2)
         if not is_float(stop) and stop != "-1":
             self.stop = datetime.strptime(stop, "%Y-%m-%d.%H:%M")
             self.dia1 = "unknown"
@@ -39,17 +42,22 @@ class RunInfo:
             self.update = False
         else:
             self.stop_run = self.get_stop_run(stop)
-            self.date_stop = self.data[self.stop_run]["begin date"]
-            self.stop = datetime.strptime(self.s2(), "%m/%d/%Y %H:%M:%S")
+            # self.date_stop = self.data[self.stop_run]["begin date"]
+            self.date_stop = self.data[self.stop_run]["endtime"]
+            # self.stop = datetime.strptime(self.s2(), "%m/%d/%Y %H:%M:%S")
+            self.stop = datetime.strptime(self.date_stop, "%Y-%m-%dT%H:%M:%SZ")
+            self.stop = self.stop + timedelta(hours=2)
             self.update = True
-            d1 = self.data[self.start_run]["diamond 1"]
-            d2 = self.data[self.start_run]["diamond 2"]
+            d1 = self.data[self.start_run]["dia1"]
+            d2 = self.data[self.start_run]["dia2"]
             self.dia1 = d1 if d1 != "none" else "Diamond Front"
             self.dia2 = d2 if d2 != "none" else "Diamond Back"
-            self.flux = self.data[self.start_run]["measured flux"]
-            self.rate = self.data[self.start_run]["raw rate"]
-            self.pixels = self.data[self.start_run]["masked pixels"]
-            self.type = self.data[self.start_run]["type"]
+            if self.dia1 == 'II6-96':
+                self.dia1 = 'II6-95'
+            self.flux = self.data[self.start_run]["measuredflux"]
+            self.rate = self.data[self.start_run]["rawrate"]
+            # self.pixels = self.data[self.start_run]["masked pixels"]
+            self.type = self.data[self.start_run]["runtype"]
 
     def get_run_start_stop(self):
         found_start = False
@@ -64,8 +72,8 @@ class RunInfo:
                     self.run_stop = int(str(run-1)[4:])
                     break
             if self.data[str(run)]["diamond 1"] != "none":
-                self.dia1 = self.data[str(run)]["diamond 1"]
-                self.dia2 = self.data[str(run)]["diamond 2"]
+                self.dia1 = self.data[str(run)]["dia1"]
+                self.dia2 = self.data[str(run)]["dia2"]
         if not is_float(self.run_stop):
             self.run_stop = self.last
 
@@ -74,21 +82,22 @@ class RunInfo:
         for run in self.data:
             if first_run > run:
                 first_run = run
-        first_run = int(str(first_run)[4:])
-        return first_run
+        # first_run = int(str(first_run)[4:])
+        return int(first_run)
 
     def last_run(self):
         last_run = self.data.iterkeys().next()
         for run in self.data:
             if last_run < run:
                 last_run = run
-        last_run = int(str(last_run)[4:])
-        return last_run
+        # last_run = int(str(last_run)[4:])
+        return int(last_run)
 
     def get_stop_run(self, stop):
         run = self.start_run
         if stop != '-1':
-            run = convert_run(stop)
+            # run = convert_run(stop)
+            run = stop
         return run
 
     def s2(self):
@@ -149,3 +158,7 @@ class RunInfo:
             for j in range(max_length - len(i[0] + i[1])):
                 spaces += " "
             print i[0], '&', i[1], '\b:' + spaces + 'run', i[2], '-', i[3]
+
+
+if __name__ == '__main__':
+    test = RunInfo('run_log.json_20150901', '340')

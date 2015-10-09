@@ -22,7 +22,8 @@ start_time = time()
 # PARSER
 # ====================================
 parser = argparse.ArgumentParser()
-default_json_file = "/home/testbeam/sdvlp/eudaqLogReader/runs_PSI_August_2015.json"
+# default_json_file = "/home/testbeam/sdvlp/eudaqLogReader/runs_PSI_August_2015.json"
+default_json_file = "/home/testbeam/sdvlp/readKeithleyCurrent/run_log.json_20150901"
 default_log_file1 = "/home/testbeam/sdvlp/keithleyClient/PSI_2015_08/Keithley237"
 default_log_file2 = "/home/testbeam/sdvlp/keithleyClient/PSI_2015_08/Keithley2657A"
 parser.add_argument("-d1", "--logsKeithley1", nargs='?', default=default_log_file1, help="enter the filepath of the Keithley-log")
@@ -52,7 +53,7 @@ if args.start != "-1":
 else:
     r1 = functions1.plot24(0, args.back)
     r2 = functions1.plot24(1, args.back)
-loop_mode = True if not args.loop_mode else False
+loop_mode = True if args.loop_mode else False
 
 # ====================================
 # SIGNAL HANDLER
@@ -134,11 +135,7 @@ else:
     test.main_loop()
 
 
-# ====================================
-# SAVING DATA
-# ====================================
-if args.save:
-    z.save_as(args.fileformat)
+
 
 # ====================================
 # UPDATE LOOP
@@ -156,7 +153,15 @@ if loop_mode:
         sleep(10)
 else:
     z.main_loop()
-    raw_input()
+    if not args.save:
+        raw_input()
+
+# ====================================
+# SAVING DATA
+# ====================================
+if args.save:
+    z.save_as(args.fileformat)
+
 
 
 
