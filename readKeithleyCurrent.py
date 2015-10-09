@@ -6,7 +6,9 @@
 import argparse
 from time import time, sleep, strftime, localtime
 from KeithleyInfo import KeithleyInfo
+from KeithleyInfoOld import KeithleyInfoOld
 from RunInfo import RunInfo
+from RunInfoOld import RunInfoOld
 import functions
 import functions1
 from root_stuff import RootGraphs
@@ -14,18 +16,27 @@ from ROOT import gROOT
 import signal
 import sys
 from analysis import Analysis
+from collections import OrderedDict
 
 # measure time:
 start_time = time()
+
+
+# ====================================
+# DEFAULTS
+# ====================================
+default_json_file = "/home/testbeam/sdvlp/readKeithleyCurrent/run_log.json_20150901"
+default_log_file1 = "/home/testbeam/sdvlp/keithleyClient/PSI_2015_08/Keithley237"
+default_log_file2 = "/home/testbeam/sdvlp/keithleyClient/PSI_2015_08/Keithley2657A"
+json_files = OrderedDict([("May", '/home/testbeam/sdvlp/readKeithleyCurrent/runs_PSI_May_2015.json'),
+                        ("August", '/home/testbeam/sdvlp/readKeithleyCurrent/run_log.json_20150901')])
+hv_logs_may = '/data/psi_2015_05/logs_keithley/'
 
 # ====================================
 # PARSER
 # ====================================
 parser = argparse.ArgumentParser()
 # default_json_file = "/home/testbeam/sdvlp/eudaqLogReader/runs_PSI_August_2015.json"
-default_json_file = "/home/testbeam/sdvlp/readKeithleyCurrent/run_log.json_20150901"
-default_log_file1 = "/home/testbeam/sdvlp/keithleyClient/PSI_2015_08/Keithley237"
-default_log_file2 = "/home/testbeam/sdvlp/keithleyClient/PSI_2015_08/Keithley2657A"
 parser.add_argument("-d1", "--logsKeithley1", nargs='?', default=default_log_file1, help="enter the filepath of the Keithley-log")
 parser.add_argument("-d2", "--logsKeithley2", nargs='?', default=default_log_file2, help="enter the filepath of the Keithley-log")
 parser.add_argument("-j", "--jsonfile", nargs='?', default=default_json_file, help="enter the name of the json file")
@@ -35,7 +46,7 @@ parser.add_argument("start", nargs='?', default="-1",
 parser.add_argument("stop", nargs='?', default="-1",
                     help="enter the runnumber without date information")
 parser.add_argument("-s", "--save", action="store_true", help="enter -s to save the file")
-parser.add_argument("-f", "--fileformat", nargs='?', default="pdf", help="enter file format e.g. pdf")
+parser.add_argument("-f", "--fileformat", nargs='?', default="png", help="enter file format e.g. pdf")
 parser.add_argument("-rt", "--rel_time", action="store_true", help="enter -rt to start the time axis from zero")
 parser.add_argument("-dr", "--dia_runs", action="store_true", help="enter -d to plot the current as long as dia was in")
 parser.add_argument("-a", "--averaging", action="store_true", help="enter -d for averaging")
@@ -43,6 +54,9 @@ parser.add_argument("-n", "--number", nargs='?', default="2", help="enter number
 parser.add_argument("-ap", "--points", nargs='?', default="10", help="number of averaging points")
 parser.add_argument("-l", "--loop_mode", action="store_true", help="enter -d for looping")
 parser.add_argument("-c", "--back", nargs='?', default="24", help="hours to go back", type=int)
+parser.add_argument("-tb", "--testbeam", nargs='?', default="August", help="test campaing")
+parser.add_argument("-rp", "--runplan", action="store_true", help="print runplan")
+
 
 args = parser.parse_args()
 
@@ -76,10 +90,21 @@ except ValueError:
 
 
 # ====================================
+# SHOW THE RUN PLAN
+# ====================================
+if args.runplan:
+    x = RunInfo(json_files[args.testbeam], r1, r2)
+    x.print_run_list()
+    exit()
+
+# ====================================
 # SHOW THE RUNS PER DIAMOND
 # ====================================
 if args.dia_runs:
-    x = RunInfo(args.jsonfile)
+    if args.testbeam == 'May':
+        x = RunInfoOld(json_files[args.testbeam])
+    else:
+        x = RunInfo(json_files[args.testbeam])
     x.print_dia_runs()
     print 'elapsed time:', functions.elapsed_time(start_time)
     exit()
@@ -88,7 +113,10 @@ if args.dia_runs:
 # SHOW FIRST ANS LAST RUN
 # ====================================
 if args.first_last:
-    x = RunInfo(args.jsonfile)
+    if args.testbeam == 'May':
+        x = RunInfoOld(json_files[args.testbeam])
+    else:
+        x = RunInfo(json_files[args.testbeam])
     x.print_times()
     print 'elapsed time:', functions.elapsed_time(start_time)
     exit()
@@ -100,13 +128,13 @@ if args.first_last:
 log_dir = ["", ""]
 log_dir[0] = functions1.get_log_dir(logs[0])
 log_dir[1] = functions1.get_log_dir(logs[1])
-x = KeithleyInfo(log_dir, args.jsonfile, r1, r2, args.number, args.averaging, args.points)
-# for i in x.time_x['Keithley2']:
-#     print i
-# exit()
-print "starting with log files:"
-for key in x.keithleys:
-    print key + ":", x.log_names[key][0].split("/")[-1]
+if args.testbeam == 'May':
+    x = KeithleyInfoOld(hv_logs_may, json_files[args.testbeam], r1, r2, args.number)
+else:
+    x = KeithleyInfo(log_dir, args.jsonfile, r1, r2, args.number, args.averaging, args.points)
+    print "starting with log files:"
+    for key in x.keithleys:
+        print key + ":", x.log_names[key][0].split("/")[-1]
 if not args.save:
     print 'start:', x.start
     print 'stop: ', x.stop

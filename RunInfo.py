@@ -12,7 +12,7 @@ from functions1 import *
 class RunInfo:
     """reads in information from the json file"""
 
-    def __init__(self, fname, start="50", stop="-1"):
+    def __init__(self, fname, start="51", stop="-1"):
         # load json
         self.f = open(fname, 'r')
         self.data = json.load(self.f, object_pairs_hook=OrderedDict)
@@ -78,19 +78,17 @@ class RunInfo:
             self.run_stop = self.last
 
     def first_run(self):
-        first_run = self.data.iterkeys().next()
+        first_run = int(self.data.iterkeys().next())
         for run in self.data:
-            if first_run > run:
-                first_run = run
-        # first_run = int(str(first_run)[4:])
+            if first_run > int(run):
+                first_run = int(run)
         return int(first_run)
 
     def last_run(self):
-        last_run = self.data.iterkeys().next()
+        last_run = int(self.data.iterkeys().next())
         for run in self.data:
-            if last_run < run:
-                last_run = run
-        # last_run = int(str(last_run)[4:])
+            if last_run < int(run):
+                last_run = int(run)
         return int(last_run)
 
     def get_stop_run(self, stop):
@@ -116,18 +114,21 @@ class RunInfo:
 
     def dia_runs(self):
         dia_runs = []
-        dia1 = self.data[convert_run(self.first)]["diamond 1"]
+        dia1 = self.data[str(self.first)]["dia1"]
         end = 0
         for run in range(self.first, self.last + 1):
-            dia1_now = self.data[convert_run(run)]["diamond 1"]
-            dia2_now = self.data[convert_run(run)]["diamond 2"]
-            if dia1_now != dia1 and dia1_now != "none":
-                dia1 = dia1_now
-                dia2 = dia2_now
-                info = [str(dia1), str(dia2), run, end]
-                dia_runs.append(info)
-            if dia1_now == dia1:
-                end = run
+            try:
+                dia1_now = self.data[str(run)]["dia1"]
+                dia2_now = self.data[str(run)]["dia2"]
+                if dia1_now != dia1 and dia1_now != "none":
+                    dia1 = dia1_now
+                    dia2 = dia2_now
+                    info = [str(dia1), str(dia2), run, end]
+                    dia_runs.append(info)
+                if dia1_now == dia1:
+                    end = run
+            except KeyError:
+                continue
         for i in range(len(dia_runs) - 1):
             dia_runs[i][3] = dia_runs[i + 1][3]
         dia_runs[-1][3] = self.last
@@ -159,6 +160,16 @@ class RunInfo:
                 spaces += " "
             print i[0], '&', i[1], '\b:' + spaces + 'run', i[2], '-', i[3]
 
+
+    def print_run_list(self):
+        for run in range(int(self.run_start), int(self.run_stop)):
+            try:
+                if self.data[str(run)]['runtype'] == 'signal' or self.data[str(run)]['runtype'] == 'rate_scan':
+                    print run, self.data[str(run)]['runtype'], '\t', \
+                        self.data[str(run)]['dia1'], '\t', self.data[str(run)]['dia2'],\
+                        "{0:6.1f}".format(self.data[str(run)]['measuredflux'])
+            except KeyError:
+                pass
 
 if __name__ == '__main__':
     test = RunInfo('run_log.json_20150901', '340')

@@ -187,7 +187,10 @@ class RootGraphs:
 
     def make_pad_title(self):
         for key, value in self.infos.keithleys.items():
-            text = self.infos.dias[key] + ' - ' + value
+            if value.startswith('Keithley'):
+                text = self.infos.dias[key] + ' - ' + value
+            else:
+                text = self.infos.dias[key]
             t1 = TText(0.08, 0.88, text)
             t1.SetTextSize(0.09)
             if self.infos.single_mode:

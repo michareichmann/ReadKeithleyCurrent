@@ -24,11 +24,11 @@ def convert_run(number):
         print "The entered run number has to be lesser then 1000"
         exit()
     elif number >= 100:
-        run_number = "150800" + str(number)
+        run_number = "150500" + str(number)
     elif number >= 10:
-        run_number = "1508000" + str(number)
+        run_number = "1505000" + str(number)
     else:
-        run_number = "15080000" + str(number)
+        run_number = "15050000" + str(number)
     return run_number
 
 
