@@ -52,7 +52,7 @@ do
    	fi
 	echo "checking if $run exists"
    	if [ ! -f $PWD/runs/$run ]; then
-      	python readKeithleyCurrent.py $start -s -f $ff
+      	python readKeithleyCurrent.py $start -s -rt -f $ff
 	else
 		echo "$run already exists"
 	fi

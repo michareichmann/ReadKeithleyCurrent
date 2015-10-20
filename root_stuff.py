@@ -1,14 +1,12 @@
 # ====================================
 # IMPORTS
 # ====================================
-from ROOT import TCanvas, TPad, TGaxis, TText, TGraph, TBox, TPaveText, gStyle, TH1F, TH1, TPaveLabel, kCanDelete
-# import ROOT
+from ROOT import TCanvas, TPad, TGaxis, TText, TGraph, TBox, TPaveText, TPaveLabel, kCanDelete
 import array
 import functions
 import os
 import time
 
-# infos=KeithleyInfo("df", "df", "df", "df")
 
 # ====================================
 # CONSTANTS
@@ -76,6 +74,9 @@ class RootGraphs:
         self.p1 = {}
         self.p2 = {}
         self.p3 = {}
+        self.p11 = {}
+        self.p22 = {}
+        self.p33 = {}
         self.make_pads()
         # margins
         self.ymin = {}
@@ -144,10 +145,13 @@ class RootGraphs:
     def goto_pad(self, index):
         if index == 0:
             self.p7.cd()
+            return self.p7
         elif index == 1:
             self.p6.cd()
+            return self.p6
         elif index == 2:
             self.p5.cd()
+            return self.p5
 
     def make_lines(self, key):
         for i in range(int(self.infos.run_start), int(self.infos.run_stop) + 1):
@@ -316,31 +320,42 @@ class RootGraphs:
             for i in range(pos, len(x) - 1):
                 self.g2[key].SetPoint(i, x[i + 1], y[i + 1])
 
-    def make_pads(self):
+    def make_pads(self, save_name=""):
+        save = (False if save_name == "" else True)
         for key in self.infos.keithleys:
             # voltage
-            p1 = TPad("p1_" + key, "", 0, 0, 1, 1)
+            p1 = TPad("p1_" + key + save_name, "", 0, 0, 1, 1)
             p1.SetFillColor(pad_color)
             p1.SetGridy()
             p1.SetMargin(left_margin, 0.07, 0.15, 0.15)
             p1.ResetBit(kCanDelete)
-            self.p1[key] = p1
+            if not save:
+                self.p1[key] = p1
+            else:
+                self.p11[key] = p1
             # current
             p2 = TPad("p2_" + key, "", 0, 0, 1, 1)
             p2.SetGridx()
             p2.SetMargin(left_margin, 0.07, 0.15, 0.15)
             make_transparent(p2)
             p2.ResetBit(kCanDelete)
-            self.p2[key] = p2
+            if not save:
+                self.p2[key] = p2
+            else:
+                self.p22[key] = p2
             # pad title + box
             p3 = TPad("p3_" + key, "", 0, 0, 1, 1)
             make_transparent(p3)
             p3.ResetBit(kCanDelete)
-            self.p3[key] = p3
+            if not save:
+                self.p3[key] = p3
+            else:
+                self.p33[key] = p3
 
     # frame for voltage
-    def draw_frame2(self, key):
-        h2 = self.p2[key].DrawFrame(self.xmin[key], self.ymin[key], self.xmax[key], self.ymax[key])
+    def draw_frame2(self, key, save=False):
+        h2 = (self.p2[key].DrawFrame(self.xmin[key], self.ymin[key], self.xmax[key], self.ymax[key]) if not save
+              else self.p22[key].DrawFrame(self.xmin[key], self.ymin[key], self.xmax[key], self.ymax[key]))
         # X-axis
         h2.GetXaxis().SetTitle("#font[22]{time [hh:mm]}")
         h2.GetXaxis().CenterTitle()
@@ -376,8 +391,9 @@ class RootGraphs:
             h2.GetYaxis().SetTitleOffset(0.58)
 
     # frame for current
-    def draw_frame1(self, key):
-        h1 = self.p1[key].DrawFrame(self.xmin[key], -1600, self.xmax[key], 1600)
+    def draw_frame1(self, key, save=False):
+        h1 = (self.p1[key].DrawFrame(self.xmin[key], -1600, self.xmax[key], 1600) if not save
+              else self.p11[key].DrawFrame(self.xmin[key], -1600, self.xmax[key], 1600))
         h1.GetXaxis().SetTickLength(0)
         h1.GetYaxis().SetTickLength(0)
         h1.GetXaxis().SetLabelOffset(99)
@@ -404,3 +420,52 @@ class RootGraphs:
         else:
             filename = "runs/" + str(run) + "." + str(formats)
             self.c.SaveAs(filename)
+
+    def save_single(self, formats):
+        dirs = os.path.dirname("singleruns/")
+        try:
+            os.stat(dirs)
+        except OSError:
+            os.mkdir(dirs)
+        if self.infos.run_stop == '-1':
+            run = 'run' + write_run(self.infos.run_start)
+        else:
+            return
+        filename = {'Keithley1': "singleruns/" + str(run) + '_' + str(self.infos.dia1) + "." + str(formats),
+                    'Keithley2': "singleruns/" + str(run) + '_' + str(self.infos.dia2) + "." + str(formats)}
+
+        # single canvas margins
+        x = int((1 - 2 * space) * 1000)
+        y = int((title - 2 * space) / 2 * 1000)
+        # gROOT.SetBatch(kFALSE)
+        save_canvas = [TCanvas('save', 'save', x, y), TCanvas('save1', 'save', x, y)]
+        # save_canvas = TCanvas('save', 'save', x, y)
+
+        ind = 0
+        # remake the pads
+        self.make_pads('save')
+        # draw everythin in the save canvas cause ROOT is just too supid and can't save sub pads...
+        for key in self.infos.keithleys:
+            save_canvas[ind].cd()
+            # first pad with voltage, frame and second axis
+            self.p11[key].Draw()
+            self.p11[key].cd()
+            self.draw_frame1(key, save=True)
+            self.g2[key].Draw("P")
+            # self.a1[key].Draw()
+            self.a1[key].DrawAxis(self.xmax[key], -1600, self.xmax[key], 1600, -1600, 1600, 510, "+L")
+            # second pad with pad titles and box
+            self.p33[key].Draw()
+            self.p33[key].cd()
+            self.t1[key].Draw()
+            # third pad with current, frame and run lines
+            self.p22[key].Draw()
+            self.p22[key].cd()
+            self.draw_frame2(key, save=True)
+            # if not self.runmode and not self.infos.single_mode:
+            #     self.make_lines(key)
+            self.g1[key].Draw("P")
+            self.pt.Draw()
+            save_canvas[ind].SaveAs(filename[key])
+            ind += 1
+

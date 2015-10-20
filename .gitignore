@@ -6,6 +6,7 @@ eudaq_logs/
 testing/
 pics/
 runs/
+singleruns/
 test.sh
 ping.py
 updateLogs.sh
