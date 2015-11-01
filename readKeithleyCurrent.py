@@ -25,10 +25,13 @@ start_time = time()
 # DEFAULTS
 # ====================================
 default_json_file = "/home/testbeam/sdvlp/readKeithleyCurrent/run_log.json_20150901"
-default_log_file1 = "/home/testbeam/sdvlp/keithleyClient/PSI_2015_08/Keithley237"
-default_log_file2 = "/home/testbeam/sdvlp/keithleyClient/PSI_2015_08/Keithley2657A"
+def_log_dir = "/home/testbeam/sdvlp/keithleyClient/"
+tb_dir = "PSI_2015_10/"
+default_log_file1 = def_log_dir + tb_dir + "Keithley237"
+default_log_file2 = def_log_dir + tb_dir + "Keithley2"
 json_files = OrderedDict([("May", '/home/testbeam/sdvlp/readKeithleyCurrent/runs_PSI_May_2015.json'),
-                          ("August", '/home/testbeam/sdvlp/readKeithleyCurrent/run_log.json_20150901')])
+                          ("August", '/home/testbeam/sdvlp/readKeithleyCurrent/run_log.json_20150901'),
+                          ("October", '/home/testbeam/sdvlp/readKeithleyCurrent/october.json')])
 hv_logs_may = '/data/psi_2015_05/logs_keithley/'
 
 # ====================================
@@ -53,7 +56,7 @@ parser.add_argument("-n", "--number", nargs='?', default="2", help="enter number
 parser.add_argument("-ap", "--points", nargs='?', default="10", help="number of averaging points")
 parser.add_argument("-l", "--loop_mode", action="store_true", help="enter -d for looping")
 parser.add_argument("-c", "--back", nargs='?', default="24", help="hours to go back", type=int)
-parser.add_argument("-tb", "--testbeam", nargs='?', default="August", help="test campaing")
+parser.add_argument("-tb", "--testbeam", nargs='?', default="October", help="test campaing")
 parser.add_argument("-rp", "--runplan", action="store_true", help="print runplan")
 
 args = parser.parse_args()
@@ -130,7 +133,7 @@ log_dir[1] = functions1.get_log_dir(logs[1])
 if args.testbeam == 'May':
     x = KeithleyInfoOld(hv_logs_may, json_files[args.testbeam], r1, r2, args.number)
 else:
-    x = KeithleyInfo(log_dir, args.jsonfile, r1, r2, args.number, args.averaging, args.points)
+    x = KeithleyInfo(log_dir, json_files[args.testbeam], r1, r2, args.number, args.averaging, args.points)
     if r2 == '-1':
         print "Analysing run:", r1, 'from testbeam campaign', args.testbeam
 if not args.save:

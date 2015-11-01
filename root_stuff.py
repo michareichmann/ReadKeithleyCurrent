@@ -468,4 +468,3 @@ class RootGraphs:
             self.pt.Draw()
             save_canvas[ind].SaveAs(filename[key])
             ind += 1
-

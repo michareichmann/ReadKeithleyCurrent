@@ -37,7 +37,7 @@ class RunInfo:
             self.dia1 = "unknown"
             self.dia2 = "unknown"
             self.type = "time interval"
-            self.get_run_start_stop()
+            # self.get_run_start_stop()
             self.time_mode = True
             self.update = False
         else:
