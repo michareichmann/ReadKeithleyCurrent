@@ -25,10 +25,11 @@ start_time = time()
 # DEFAULTS
 # ====================================
 default_json_file = "/home/testbeam/sdvlp/readKeithleyCurrent/run_log.json_20150901"
-def_log_dir = "/home/testbeam/sdvlp/keithleyClient/"
+# def_log_dir = "/home/testbeam/sdvlp/keithleyClient/"
+def_log_dir = "/home/testbeam/testing/micha/HVClient/"
 tb_dir = "PSI_2015_10/"
-default_log_file1 = def_log_dir + tb_dir + "Keithley237"
-default_log_file2 = def_log_dir + tb_dir + "Keithley2"
+default_log_file1 = def_log_dir + tb_dir + "Keithley237_CH0"
+default_log_file2 = def_log_dir + tb_dir + "ISEG-NHS-6220x_CH3"
 json_files = OrderedDict([("May", '/home/testbeam/sdvlp/readKeithleyCurrent/runs_PSI_May_2015.json'),
                           ("August", '/home/testbeam/sdvlp/readKeithleyCurrent/run_log.json_20150901'),
                           ("October", '/home/testbeam/sdvlp/readKeithleyCurrent/october.json')])

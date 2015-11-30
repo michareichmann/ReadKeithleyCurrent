@@ -31,7 +31,7 @@ class RunInfo:
             # s1 = self.date_start + " " + self.data[self.start_run]["start time"]
             # self.start = datetime.strptime(s1, "%m/%d/%Y %H:%M:%S")
             self.start = datetime.strptime(self.date_start, "%Y-%m-%dT%H:%M:%SZ")
-            self.start = self.start + timedelta(hours=2)
+            self.start = self.start + timedelta(hours=1)
         if not is_float(stop) and stop != "-1":
             self.stop = datetime.strptime(stop, "%Y-%m-%d.%H:%M")
             self.dia1 = "unknown"
@@ -46,7 +46,7 @@ class RunInfo:
             self.date_stop = self.data[self.stop_run]["endtime"]
             # self.stop = datetime.strptime(self.s2(), "%m/%d/%Y %H:%M:%S")
             self.stop = datetime.strptime(self.date_stop, "%Y-%m-%dT%H:%M:%SZ")
-            self.stop = self.stop + timedelta(hours=2)
+            self.stop = self.stop + timedelta(hours=1)
             self.update = True
             d1 = self.data[self.start_run]["dia1"]
             d2 = self.data[self.start_run]["dia2"]
